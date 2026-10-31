@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "Meine bunte Welt – Malen & Spielen",
+  "short_name": "Bunte Welt",
+  "description": "Zehn kinderfreundliche Mal- und Spielaktivitäten, werbefrei und offline nutzbar.",
+  "lang": "de",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff7ed",
+  "theme_color": "#fff7ed",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
