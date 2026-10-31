@@ -1,31 +1,38 @@
-# Meine bunte Welt – Version 1.3
+# Meine bunte Welt – Version 2.0
 
-Eine werbefreie, offlinefähige Mal- und Spielwelt für Kinder ab etwa zwei Jahren.
+Werbefreie Offline-Kinder-App für das iPad, mit Fokus auf kindgerechtes Malen.
 
-## Direkt öffnen
+## Die wichtigsten Neuerungen
+
+- Bildschirmfüllende Malfläche ohne herkömmliche Webseitenleisten
+- **Neues Blatt** speichert das bisherige Bild atomar in der Galerie und öffnet ein leeres Blatt mit nur einem Tipp
+- Schwebende Palette, Pinselarten, Radierer, Sterne, Rückgängig und Wiederholen
+- Visuell überarbeiteter Startbildschirm mit vier großen Spielzugängen
+- Neu: Bausteine, Farben sortieren, Aquarium, Suchspiel
+- Bis zu sechs lokale Kinderprofile mit separaten Malblättern und Galerien
+- Bisherige Aktivitäten aus 1.3 weiterhin nutzbar, auch offline
+- Eltern-PIN, lokal gespeicherte Bilder, JSON-Backup und Export bestehen weiter
+
+## Datenschutz und Offlinebetrieb
+
+Die App verwendet keine Accounts, Tracker oder externe Bibliotheken.
+Zeichnungen werden nur im lokalen IndexedDB-Speicher dieses Geräts gespeichert.
+Zum Sichern der Bilder den Elternbereich nutzen. Ein normaler Browser-/Gerätespeicher ist
+nicht vor versehentlicher Löschung oder Betriebssystembereinigung geschützt.
+Für iPad-Kinderbetrieb geführten Zugriff aktivieren.
+
+## Migration
+
+Der bisherige Entwurf `draft` und ältere Galerie-Bilder bleiben erhalten und werden
+als Bilder von Profil `main` behandelt. Neue Profile erhalten eigene Entwürfe.
+Bestehende v1.3-Backup-Dateien können weiter eingelesen werden. Vor dem Update ist
+eine manuelle Sicherung der vorhandenen Bilder empfehlenswert.
+
+## Veröffentlichen
+
+GitHub Pages vom Branch `main` mit Verzeichnis `/`.
+
 https://dennodhn.github.io/bunte-welt-/
 
-Auf dem iPad in Safari öffnen, über **Teilen → Zum Home-Bildschirm** installieren. Die App anschließend einmal mit Internet vollständig laden und im Flugmodus prüfen. Für eine Beschränkung auf die App **Geführten Zugriff** in iPadOS aktivieren.
-
-## 14 Aktivitäten
-- Freies Finger-Malen mit Zauberpinsel, Stempel und Radierer
-- 10 Ausmalbilder: Fisch, Blume, Haus, Schmetterling, Auto, Luftballons, Sonne, Baum, Katze, Rakete
-- Stickerbuch mit drei Landschaften und 36 Stickern; Szenen bleiben lokal gespeichert
-- Zauberbilder mit fünf verdeckten Motiven zum Freiwischen
-- Farben und Formen, Tierpuzzle, Farben mischen, Seifenblasen, Tiere füttern
-- Tierbabys mit den richtigen Elterntieren zusammenbringen
-- Tierlaute, Blumen wachsen lassen, Sternenhimmel
-- Musik-Ecke mit Xylophon, Trommel, Glöckchen und Rassel
-
-## Familienfunktionen
-Vier Lieblingsspiele auf der Startseite, optionaler Kindername, Spielstufe, Farbwelt, vergrößerter Spielmodus, Ruhemodus, Eltern-PIN.
-
-## Bilder und Backups
-Bilder liegen auf dem jeweiligen Gerät in IndexedDB. Im Elternbereich kann man einzelne Kunstwerke exportieren oder löschen und das gesamte Familien-Archiv als **JSON-Backup** einschließlich Ausmalfortschritt, Stickerbildern und Einstellungen sichern und wiederherstellen. Die Eltern-PIN wird nicht exportiert. Nach der Wiederherstellung bleiben bestehende Malentwürfe unangetastet.
-
-**Wichtig:** iPadOS kann lokalen Browser-Speicher unter bestimmten Umständen entfernen. Wichtige Bilder regelmäßig außerhalb der App sichern. Der echte iPad-Test ist noch ausstehend.
-
-## Technik
-Statische PWA mit `index.html`, `style.css`, `extra.js`, `app.js`, `sw.js`, `manifest.webmanifest` und `icons/`. Keine externen Bibliotheken, keine Werbung, kein Tracking, keine Server-Datenbank.
-
-**GitHub:** `main` ist die veröffentlichte Version. Backup: `backup/v1.2-before-v1.3`; Entwicklung: `feature/v1.3-kreativwelt`.
+GitHub-Pages-Offline-Support: Die App nach der Installation einmal vollständig laden,
+danach im Flugmodus testen. Ein echter iPad-Praxistest bleibt erforderlich.

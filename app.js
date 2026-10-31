@@ -1,4 +1,4 @@
-/* Meine bunte Welt – v1.3.0. Komplett offline, ohne externe Bibliotheken oder Tracker. */
+/* Meine bunte Welt – v2.0.0. Komplett offline, ohne externe Bibliotheken oder Tracker. */
 'use strict';
 const app=document.getElementById('app');
 const modalRoot=document.getElementById('modal-root');
@@ -9,6 +9,8 @@ const SHAPES=[['Kreis','circle'],['Quadrat','square'],['Dreieck','triangle'],['H
 const ANIMALS=[['Kuh','🐮','Muh!'],['Schaf','🐑','Mäh!'],['Hund','🐶','Wuff!'],['Katze','🐱','Miau!'],['Ente','🦆','Quak!'],['Pferd','🐴','Wieher!']];
 const FOOD=[['Hase','🐰','🥕',['🥕','🍋','🍕']],['Affe','🐵','🍌',['🍎','🍌','🧀']],['Kuh','🐮','🌿',['🍪','🌿','🍓']],['Katze','🐱','🐟',['🥦','🐟','🍌']]];
 const CATEGORIES={paint:{title:'Malen & Ausmalen',subtitle:'Hier kannst du richtig kreativ sein!',activities:[['draw','Freies Malen','🎨','Male mit vielen bunten Farben.'],['color','Ausmalbilder','🦋','Bunte Bilder mit Fingertipps ausmalen.'],['stickers','Stickerwelt','🌼','Gestalte eigene bunte Bilder.'],['scratch','Zauberbilder','✨','Wische und entdecke Überraschungen.']]},play:{title:'Kleine Spiele',subtitle:'Tippen, staunen und ausprobieren.',activities:[['shapes','Farben & Formen','🔴','Finde die richtige Form.'],['puzzle','Tier-Puzzle','🧩','Setze das Tier wieder zusammen.'],['mix','Farben mischen','🌈','Was passiert mit zwei Farben?'],['bubbles','Seifenblasen','🫧','Lass die Blasen platzen.'],['food','Tiere füttern','🥕','Was frisst welches Tier?'],['families','Tierbabys','🐣','Finde die passende Tierfamilie.']]},explore:{title:'Entdeckerwelt',subtitle:'Tiere und Natur entdecken.',activities:[['animals','Tiergeräusche','🐮','Wer macht Muh und wer macht Miau?'],['garden','Mein kleiner Garten','🌷','Lass Blumen wachsen.'],['stars','Sterne leuchten','🌟','Ein ruhiger Sternenhimmel zum Entdecken.'],['music','Musik machen','🎵','Entdecke eigene Klänge.']]}};
+CATEGORIES.play.activities.push(['blocks','Bausteine','▤','Bau deinen Turm.'],['sort','Farben sortieren','◉','Sortiere die Farben.']);
+CATEGORIES.explore.activities.push(['aquarium','Aquarium','🐠','Gestalte ein Aquarium.'],['seek','Suchspiel','✦','Finde ein Bild.']);
 const ALL_ACTIVITIES=Object.values(CATEGORIES).flatMap(c=>c.activities);
 const store={
   get(k,fallback=null){try{let v=localStorage.getItem('bw-'+k);return v===null?fallback:JSON.parse(v);}catch{return fallback;}},
@@ -16,6 +18,7 @@ const store={
 };
 let settings=Object.assign({sound:true,quiet:false,easy:true,childName:'',ageBand:'2',theme:'sun',fullscreenDefault:true,favorites:['draw','stickers','bubbles','animals']},store.get('settings',{}));
 const ACTIVITY_PAGES=new Set(['draw','color','shapes','puzzle','mix','bubbles','food','animals','garden','stars','stickers','scratch','families','music']);
+['blocks','sort','aquarium','seek'].forEach(id=>ACTIVITY_PAGES.add(id));
 let immersiveActive=store.get('immersive-active',settings.fullscreenDefault);
 function applyTheme(){document.body.dataset.theme=['sun','mint','ocean'].includes(settings.theme)?settings.theme:'sun';}
 applyTheme();
@@ -53,19 +56,8 @@ function topbar(back='home'){
  return `<header class="topbar"><button class="home-link" id="back" aria-label="Zurück"><span class="round-btn" aria-hidden="true">←</span><span>Zurück</span></button><div class="topbar-actions">${focus}<button class="round-btn" id="parent" aria-label="Elternbereich" title="Elternbereich">⚙️</button></div></header>`;
 }
 function wireTop(back='home'){on('back','click',()=>route(back));on('parent','click',openParentGate);on('focus-toggle','click',toggleImmersive);}
-function home(){
- const greeting=settings.childName?`Hallo, ${esc(settings.childName)}! Was möchtest du machen?`:'Was möchtest du heute machen?';
- app.innerHTML=`<header class="topbar"><div class="brand"><span class="brand-icon">🌈</span>Meine bunte Welt</div><button class="round-btn" id="parent" title="Elternbereich" aria-label="Elternbereich">⚙️</button></header>
-  <div class="hero"><div class="hero-text"><h1>${greeting}</h1><p>Hier gibt es so viel Schönes zu entdecken!</p></div><div class="hero-art" aria-hidden="true">🦄</div></div>
-  <h2 class="section-heading">Such dir etwas aus!</h2><div class="tile-grid">
-  <button class="tile paint" id="go-paint"><span class="emoji" aria-hidden="true">🎨</span><span><span class="tile-title">Malen</span><span class="tile-caption">Bunte Kunstwerke zaubern</span></span></button>
-  <button class="tile play" id="go-play"><span class="emoji" aria-hidden="true">🧩</span><span><span class="tile-title">Spielen</span><span class="tile-caption">Lustige kleine Spiele</span></span></button>
-  <button class="tile explore" id="go-explore"><span class="emoji" aria-hidden="true">🐣</span><span><span class="tile-title">Entdecken</span><span class="tile-caption">Tiere, Blumen und vieles mehr</span></span></button>
-  </div><button class="gallery-link" id="gallery"><span>🖼️ Meine Bilder</span><span aria-hidden="true">›</span></button>
-  <div class="favorites"><h2 class="section-heading">⭐ Lieblingsspiele</h2><div class="favorite-grid">${(Array.isArray(settings.favorites)?settings.favorites:['draw','stickers','bubbles','animals']).filter(id=>ALL_ACTIVITIES.some(a=>a[0]===id)).slice(0,4).map(id=>{const a=ALL_ACTIVITIES.find(x=>x[0]===id);return `<button class="favorite-button" data-favorite="${id}"><span>${a[2]}</span><b>${a[1]}</b></button>`;}).join('')}</div></div><div class="footer-note">Version 1.3 · Ohne Werbung · Funktioniert offline</div>`;
-  on('parent','click',openParentGate);['paint','play','explore'].forEach(cat=>on('go-'+cat,'click',()=>route('category',cat)));on('gallery','click',()=>route('gallery'));app.querySelectorAll('[data-favorite]').forEach(b=>b.addEventListener('click',()=>route(b.dataset.favorite)));
-}
-function category(){const c=CATEGORIES[currentCategory];app.innerHTML=topbar()+heading(c.title,c.subtitle)+`<div class="activity-grid">${c.activities.map(([id,name,emoji,desc])=>`<button class="activity-card" data-activity="${id}"><span class="emoji" aria-hidden="true">${emoji}</span><span><strong>${name}</strong><small>${desc}</small></span></button>`).join('')}</div>`;wireTop('home');app.querySelectorAll('[data-activity]').forEach(b=>b.addEventListener('click',()=>route(b.dataset.activity)));}
+function home(){return v2Home();}
+function category(){return v2Category();}
 function frame(title,subtitle,content,back='category'){
  const immersiveControls=ACTIVITY_PAGES.has(activePage)?'<div class="focus-float"><button id="focus-exit" aria-label="Zurück zur Spielauswahl">← Zurück</button><button id="focus-tool" aria-label="Malwerkzeuge einblenden">⚙ Werkzeuge</button><button id="focus-normal" aria-label="Vollbild ausschalten">↙ Normal</button></div>':'';
  app.innerHTML=topbar()+heading(title,subtitle)+immersiveControls+content;
@@ -102,63 +94,14 @@ function zipPictures(pictures){
  return new Blob(chunks,{type:'application/zip'});
 }
 function downloadBlob(blob,name){let url=URL.createObjectURL(blob);downloadData(url,name);setTimeout(()=>URL.revokeObjectURL(url),60000);} 
-function saveToGallery(data,label){let id='img-'+Date.now()+'-'+Math.floor(Math.random()*9999);return putPic({id,type:'gallery',label,created:Date.now(),data}).then(()=>{toast('Bild gespeichert! 🌟');beep();}).catch(()=>toast('Speichern leider nicht möglich.'));}
+function saveToGallery(data,label){let id='img-'+Date.now()+'-'+Math.floor(Math.random()*9999);return putPic({id,type:'gallery',label,profile:v2Profile(),created:Date.now(),data}).then(()=>{toast('Bild gespeichert! 🌟');beep();}).catch(()=>toast('Speichern leider nicht möglich.'));}
 function confirmBox(title,message,yesLabel,onConfirm){
  modalRoot.innerHTML=`<div class="modal-backdrop"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title"><h2 id="dialog-title">${esc(title)}</h2><p>${esc(message)}</p><div class="dialog-actions"><button class="tool-btn" id="cancel-modal">Zurück</button><button class="tool-btn primary" id="ok-modal">${esc(yesLabel)}</button></div></section></div>`;
  on('cancel-modal','click',()=>modalRoot.replaceChildren());on('ok-modal','click',()=>{modalRoot.replaceChildren();onConfirm();});
 }
 
 /* Malstudio */
-function draw(){
- const selected={value:COLORS[0][1]},pen={size:18,mode:'pen'};
- frame('Meine Malwerkstatt','Male einfach mit deinem Finger – ganz wie du möchtest!',`<div class="panel"><div class="paint-tools"><div>${palette(selected.value)}</div></div><details class="advanced-tools"><summary>✨ Weitere Malwerkzeuge</summary><div class="toolbar"><button class="tool-btn active" id="pen" aria-pressed="true">🖌️ Pinsel</button><button class="tool-btn" id="rainbow" aria-pressed="false">🌈 Zauber</button><button class="tool-btn" id="eraser" aria-pressed="false">🧽 Radieren</button><button class="tool-btn" id="stamp" aria-pressed="false">⭐ Sterne</button></div><div class="toolbar" style="margin-bottom:15px"><span class="tool-label">Pinselgröße</span><button class="tool-btn" data-size="7">Klein</button><button class="tool-btn active" data-size="18">Mittel</button><button class="tool-btn" data-size="37">Groß</button></div></details><div class="drawing-surface"><canvas id="canvas" width="1200" height="900" aria-label="Malfläche"></canvas></div><div class="toolbar" style="margin-top:16px"><button class="tool-btn soft" id="undo">↶ Rückgängig</button><button class="tool-btn soft" id="new-paper">📄 Neues Blatt</button><button class="tool-btn primary" id="save">💛 In meine Bilder</button></div><p class="paint-hint" id="draft-status" role="status">Entwurf wird geladen …</p></div>`);
- bindPalette(selected,()=>{if(pen.mode==='eraser'){pen.mode='pen';markMode();}});
- let canvas=document.getElementById('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:false});
- const background=()=>{ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);};background();
- const history=[];let painting=false,last=null,dirty=false,saveTimer=null,loaded=false,editVersion=0,activePointer=null;
- const saveLabel=()=>document.getElementById('draft-status');
- function snapshot(){history.push(canvas.toDataURL('image/png'));if(history.length>10)history.shift();}
- function autosave(){
-   if(!loaded||!dirty)return Promise.resolve();
-   clearTimeout(saveTimer);saveTimer=null;
-   const revision=editVersion;
-   let data;
-   try{data=canvas.toDataURL('image/png');}catch{toast('Entwurf konnte nicht gelesen werden.');return Promise.resolve();}
-   const promise=writeDraftInOrder({id:'draft',type:'draft',data,created:Date.now()});
-   promise.then(()=>{if(editVersion===revision){dirty=false;const label=saveLabel();if(label)label.textContent='✓ Entwurf gespeichert';}})
-     .catch(()=>{const label=saveLabel();if(label)label.textContent='Speicherung fehlgeschlagen';toast('Speichern nicht möglich – Speicherplatz prüfen.');});
-   return promise;
- }
- function scheduleSave(delay=900){
-   dirty=true;editVersion++;
-   const label=saveLabel();if(label)label.textContent='Entwurf wird gespeichert …';
-   if(saveTimer===null)saveTimer=setTimeout(()=>{saveTimer=null;autosave();if(painting && dirty)scheduleContinuedSave();},delay);
- }
- function scheduleContinuedSave(){if(painting && saveTimer===null)saveTimer=setTimeout(()=>{saveTimer=null;autosave();scheduleContinuedSave();},1200);}
- function saveNow(){clearTimeout(saveTimer);saveTimer=null;return autosave();}
- function onHidden(){if(document.visibilityState==='hidden')saveNow();}
- document.addEventListener('visibilitychange',onHidden);
- window.addEventListener('pagehide',saveNow);
- // Der Entwurf wird zuerst geladen. Eingaben währenddessen bleiben gesperrt.
- canvas.style.opacity='.75';
- getPic('draft').then(saved=>new Promise(resolve=>{
-   if(!saved?.data){resolve();return;}let img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,canvas.width,canvas.height);resolve();};img.onerror=resolve;img.src=saved.data;
- })).catch(()=>{}).finally(()=>{loaded=true;canvas.style.opacity='1';const label=saveLabel();if(label)label.textContent='✓ Dein Entwurf ist bereit';});
- function pos(e){let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};}
- function markMode(){['pen','rainbow','eraser','stamp'].forEach(id=>{let b=document.getElementById(id),a=pen.mode===id;b.classList.toggle('active',a);b.setAttribute('aria-pressed',String(a));});}
- function markSize(){app.querySelectorAll('[data-size]').forEach(b=>b.classList.toggle('active',Number(b.dataset.size)===pen.size));}
- function dot(p){ctx.beginPath();ctx.arc(p.x,p.y,pen.size/2,0,Math.PI*2);ctx.fillStyle=pen.mode==='eraser'?'white':pen.mode==='rainbow'?'#ed7ab0':selected.value;ctx.fill();}
- function star(p){const n=5,outer=pen.size*2.4,inner=outer*.44;ctx.beginPath();for(let i=0;i<n*2;i++){let angle=(Math.PI*i/n)-Math.PI/2,r=i%2?inner:outer,x=p.x+r*Math.cos(angle),y=p.y+r*Math.sin(angle);i?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.closePath();ctx.fillStyle=selected.value;ctx.fill();}
- function stroke(p,q){ctx.beginPath();ctx.moveTo(q.x,q.y);ctx.lineTo(p.x,p.y);ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=pen.size;ctx.strokeStyle=pen.mode==='eraser'?'#fff':pen.mode==='rainbow'?`hsl(${((p.x+p.y)*.55)%360} 90% 67%)`:selected.value;ctx.stroke();}
- canvas.addEventListener('pointerdown',e=>{if(!loaded||activePointer!==null||e.pointerType==='mouse'&&e.button!==0)return;e.preventDefault();activePointer=e.pointerId;snapshot();painting=true;last=pos(e);try{canvas.setPointerCapture(e.pointerId);}catch{}if(pen.mode==='stamp')star(last);else dot(last);scheduleSave();});
- canvas.addEventListener('pointermove',e=>{if(!painting||e.pointerId!==activePointer)return;e.preventDefault();let p=pos(e);if(pen.mode==='stamp'){if(Math.hypot(p.x-last.x,p.y-last.y)>pen.size*4){star(p);last=p;}}else{stroke(p,last);last=p;}dirty=true;editVersion++;});
- const finish=e=>{if(!painting||e.pointerId!==activePointer)return;painting=false;activePointer=null;saveNow();};canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);canvas.addEventListener('lostpointercapture',finish);
- ['pen','rainbow','eraser','stamp'].forEach(id=>on(id,'click',()=>{pen.mode=id;markMode();}));app.querySelectorAll('[data-size]').forEach(b=>b.addEventListener('click',()=>{pen.size=Number(b.dataset.size);markSize();}));
- on('undo','click',()=>{if(!loaded)return;let old=history.pop();if(!old){toast('Noch nichts zum Rückgängigmachen.');return;}let img=new Image();img.onload=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0);scheduleSave();};img.src=old;});
- on('new-paper','click',()=>confirmBox('Neues Blatt?','Dein aktueller Entwurf wird durch ein leeres Blatt ersetzt. Gespeicherte Bilder bleiben erhalten.','Ja, neues Blatt',()=>{snapshot();background();scheduleSave();}));
- on('save','click',()=>{if(!loaded)return;saveToGallery(canvas.toDataURL('image/png'),'Mein Kunstwerk');});
- cleanup.push(()=>{clearTimeout(saveTimer);document.removeEventListener('visibilitychange',onHidden);window.removeEventListener('pagehide',saveNow);if(dirty)autosave();});
-}
+function draw(){return v2Draw();}
 
 /* Tap-to-fill SVG-Ausmalbilder */
 function part(tag,attrs,key,state){return `<${tag} ${attrs} data-colorpart="${key}" fill="${state[key]||'#ffffff'}" stroke="#55647A" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />`;}
@@ -253,7 +196,7 @@ function puzzle(){const src='data:image/svg+xml;charset=utf-8,'+encodeURICompone
 function garden(){let stage=0;frame('Mein kleiner Garten','Aus einem Samen kann eine wunderschöne Blume wachsen.',`<div class="activity-area"><div class="garden"><div class="sun" aria-hidden="true">☀️</div><div class="plant" id="garden-plant">🟤</div><div class="prompt-small" id="garden-caption">Hier ist noch ein kleiner Samen.</div><div class="garden-controls"><button class="big-btn primary" id="garden-action">💧 Gießen</button><button class="big-btn" id="garden-again" style="display:none">🌱 Neuer Samen</button></div></div></div>`);on('garden-action','click',()=>{stage=Math.min(3,stage+1);let plant=document.getElementById('garden-plant'),cap=document.getElementById('garden-caption');plant.classList.remove('grow');void plant.offsetWidth;plant.classList.add('grow');plant.textContent=['🟤','🌱','🌿','🌷'][stage];cap.textContent=['Hier ist noch ein kleiner Samen.','Oh! Der Samen wächst!','Schon ganz groß!','Eine wunderschöne Blume! 💛'][stage];beep();if(stage===3){document.getElementById('garden-action').style.display='none';document.getElementById('garden-again').style.display='block';}});on('garden-again','click',()=>{stage=0;document.getElementById('garden-plant').textContent='🟤';document.getElementById('garden-caption').textContent='Hier ist noch ein kleiner Samen.';document.getElementById('garden-action').style.display='block';document.getElementById('garden-again').style.display='none';});}
 
 /* Galerie und Bilderexport */
-async function gallery(){frame('Meine Bilder','Alle deine bunten Kunstwerke an einem Ort.',`<div id="gallery-list"><div class="empty-state"><span class="emoji">🖼️</span><h2>Bilder werden geladen ...</h2></div></div>`,'home');let list=document.getElementById('gallery-list');try{let pictures=(await allPics()).filter(x=>x.type==='gallery').sort((a,b)=>b.created-a.created);if(activePage!=='gallery')return;if(!pictures.length){list.innerHTML=`<div class="empty-state"><div class="emoji">🎨</div><h2>Hier ist noch Platz für Bilder!</h2><p>Male etwas Schönes und speichere es in deiner Galerie.</p><button class="big-btn primary" id="gallery-paint">Jetzt malen</button></div>`;on('gallery-paint','click',()=>route('draw'));return;}list.innerHTML=`<div class="gallery-grid">${pictures.map((p,i)=>`<article class="gallery-item"><img data-image="${i}" alt="${esc(p.label)}"/><div class="row"><div><strong>${esc(p.label)}</strong><small>${new Date(p.created).toLocaleDateString('de-DE')}</small></div></div></article>`).join('')}</div><p class="helper">Zum Löschen öffne den geschützten Elternbereich.</p>`;pictures.forEach((p,i)=>list.querySelector(`[data-image="${i}"]`).src=p.data);}catch{list.innerHTML=`<div class="empty-state"><h2>Galerie nicht verfügbar</h2><p>Der lokale Speicher konnte nicht geöffnet werden. Bitte im Safari-Browser über HTTPS testen.</p></div>`;}}
+async function gallery(){return v2Gallery();}
 
 /* Eltern-PIN: Verhindert versehentliche Änderung in der App; keine Gerätesperre. */
 function openParentGate(){
@@ -277,6 +220,6 @@ function parents(){frame('Elternbereich','Einstellungen und Schutzfunktionen fü
  on('change-pin','click',()=>{modalRoot.innerHTML=`<div class="modal-backdrop"><form class="dialog" id="change-pin-form" role="dialog" aria-modal="true"><h2>Eltern-PIN ändern</h2><p>Gib deine neue vierstellige PIN zweimal ein.</p><input id="change-a" type="password" pattern="[0-9]{4}" maxlength="4" inputmode="numeric" placeholder="Neue PIN" required/><input id="change-b" type="password" pattern="[0-9]{4}" maxlength="4" inputmode="numeric" placeholder="PIN wiederholen" required/><div class="err" id="change-error"></div><div class="dialog-actions"><button class="tool-btn" type="button" id="change-cancel">Abbrechen</button><button class="tool-btn primary" type="submit">Ändern</button></div></form></div>`;on('change-cancel','click',()=>modalRoot.replaceChildren());on('change-pin-form','submit',e=>{e.preventDefault();let a=document.getElementById('change-a').value,b=document.getElementById('change-b').value;if(!/^\d{4}$/.test(a)||a!==b){document.getElementById('change-error').textContent='PINs stimmen nicht überein.';return;}store.set('parent-pin',a);modalRoot.replaceChildren();toast('PIN geändert.');});});
 }
 const EXTRA_PAGES={stickers,scratch,music,families};
-function render(){const pages={home,category,draw,color,shapes,puzzle,mix,bubbles,food,animals,garden,stars,gallery,parents,...EXTRA_PAGES};(activePage==='manage-gallery'?manageGallery:pages[activePage]||home)();syncImmersive();}
+function render(){const pages={home,category,draw,color,shapes,puzzle,mix,bubbles,food,animals,garden,stars,gallery,parents,blocks,sort,aquarium,seek,...EXTRA_PAGES};(activePage==='manage-gallery'?manageGallery:pages[activePage]||home)();if(activePage==='parents')v2Parents();syncImmersive();}
 render();
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
