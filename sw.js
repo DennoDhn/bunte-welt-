@@ -1,5 +1,5 @@
 /* Meine bunte Welt – GitHub Pages offline app */
-const CACHE = 'bunte-welt-v1.1.1';
+const CACHE = 'bunte-welt-v1.2.0';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.webmanifest', './icons/icon.svg'];
 const scopeURL = new URL(self.registration.scope);
 const coreURLs = new Set(ASSETS.map(path => new URL(path, scopeURL).href));
