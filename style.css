@@ -31,3 +31,40 @@
 .advanced-tools[open] summary::after{transform:rotate(180deg)}
 .advanced-tools .toolbar{margin:11px 0}
 .shape-options.easy{grid-template-columns:repeat(2,minmax(0,1fr));max-width:540px}
+
+
+/* v1.2 – großer Spielmodus und optionale Familieneinstellungen */
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.focus-toggle{padding:0 17px;font-size:16px;font-weight:850;white-space:nowrap}
+.focus-float{display:none}
+body[data-theme="mint"]{background:radial-gradient(circle at 8% 10%,#d8f6e8 0 110px,transparent 111px),radial-gradient(circle at 93% 8%,#e9f6c9 0 120px,transparent 121px),#f3fff7}
+body[data-theme="mint"] .hero{background:linear-gradient(120deg,#d8f3e3,#f1f9d4 51%,#d5eef3)}
+body[data-theme="ocean"]{background:radial-gradient(circle at 10% 11%,#d5ecff 0 100px,transparent 101px),radial-gradient(circle at 93% 12%,#dddafa 0 130px,transparent 131px),#f2f9ff}
+body[data-theme="ocean"] .hero{background:linear-gradient(120deg,#d9efff,#e4efff 51%,#e8e4ff)}
+.setting select,.setting input[type="text"]{border:2px solid #e2e5ed;background:white;color:var(--ink);border-radius:15px;padding:10px 12px;max-width:190px;font-size:16px;min-height:48px}
+body.focus-mode{overflow:hidden;touch-action:pan-x pan-y}
+body.focus-mode #app{position:relative;max-width:none;width:100%;height:100dvh;min-height:0;padding:calc(7px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));display:flex;flex-direction:column;overflow:hidden}
+body.focus-mode .topbar,body.focus-mode .page-intro{display:none}
+body.focus-mode .focus-float{display:flex;position:absolute;top:calc(8px + env(safe-area-inset-top));left:calc(16px + env(safe-area-inset-left));right:calc(16px + env(safe-area-inset-right));z-index:15;align-items:center;justify-content:space-between;gap:8px;pointer-events:none}
+body.focus-mode .focus-float button{pointer-events:auto;min-height:48px;border-radius:19px;padding:10px 14px;font-size:16px;font-weight:900;color:#35475c;background:#fffdf9ed;border:2px solid #ffffffb0;box-shadow:0 6px 22px #48526620}
+body.focus-mode .focus-float #focus-tool{display:none}
+body.focus-mode:has(.drawing-surface) .focus-float #focus-tool{display:block}
+body.focus-mode .panel,body.focus-mode .activity-area{flex:1;min-height:0;margin:0;overflow:auto}
+body.focus-mode .panel{display:flex;flex-direction:column;align-items:stretch;padding:5px 8px 3px;box-shadow:none;background:transparent;border:none;overflow:hidden}
+body.focus-mode .drawing-surface{order:1;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;width:100%;border-width:2px;border-radius:20px}
+body.focus-mode .drawing-surface canvas{display:block;width:auto;height:auto;max-width:100%;max-height:100%;aspect-ratio:4/3;object-fit:contain}
+body.focus-mode .paint-tools{order:3;flex:0 0 auto;display:flex;justify-content:center;margin:4px 0 2px;max-height:75px;overflow:auto}
+body.focus-mode .paint-tools .palette{justify-content:center}
+body.focus-mode .panel>.toolbar{order:4;flex:0 0 auto;margin:4px 0 1px!important;justify-content:center;max-height:60px;overflow-x:auto;flex-wrap:nowrap}
+body.focus-mode .panel>.toolbar .tool-btn{white-space:nowrap;padding:11px 14px;min-height:45px;font-size:15px}
+body.focus-mode .advanced-tools{display:none;order:2;margin:3px 0;flex:0 0 auto;max-height:120px;overflow:auto}
+body.focus-mode.focus-tools-open .advanced-tools{display:block}
+body.focus-mode .paint-hint{display:none}
+body.focus-mode .coloring-surface{order:1;flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+body.focus-mode .coloring-surface svg{height:auto;width:auto;max-height:100%;max-width:100%;min-height:0}
+body.focus-mode .chip-row{order:2;flex:0 0 auto;flex-wrap:nowrap;overflow-x:auto;max-width:100%;margin:4px 0;min-height:54px}
+body.focus-mode .chip{flex-shrink:0}
+body.focus-mode .activity-area{padding:57px 10px 12px;height:100%;max-height:none}
+body.focus-mode .activity-area .bubble-field,body.focus-mode .activity-area .sky-field{min-height:40vh}
+@media(max-height:650px) and (orientation:landscape){body.focus-mode .focus-float button{min-height:40px;padding:6px 11px;font-size:14px}body.focus-mode .paint-tools{max-height:64px}body.focus-mode .panel>.toolbar{max-height:48px}body.focus-mode .panel>.toolbar .tool-btn{min-height:40px;padding:7px 12px}}
+@media(max-width:620px){.focus-toggle{padding:0 10px;font-size:14px}.setting{flex-wrap:wrap;gap:10px}body.focus-mode .focus-float #focus-tool{font-size:13px}body.focus-mode .panel>.toolbar{gap:5px}body.focus-mode .panel>.toolbar .tool-btn{font-size:13px;padding:7px 8px}}
