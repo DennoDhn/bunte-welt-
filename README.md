@@ -1,35 +1,31 @@
-# Meine bunte Welt – Version 1.2
+# Meine bunte Welt – Version 1.3
 
-Offline-fähige, werbefreie Mal- und Spielwelt für Kinder, die von Familien auf dem eigenen Gerät genutzt werden kann. Keine Registrierung, keine Cloud-Konten, keine Werbung.
+Eine werbefreie, offlinefähige Mal- und Spielwelt für Kinder ab etwa zwei Jahren.
 
-## Neu in Version 1.2
+## Direkt öffnen
+https://dennodhn.github.io/bunte-welt-/
 
-- Großer Spielmodus: Malfläche und Spiele füllen den verfügbaren App-Bereich aus.
-- Ein Knopf wechselt zwischen Fokusmodus und normaler Ansicht.
-- Optionaler Kindername, Alters-/Schwierigkeitsstufe, drei Farbwelten, Standard-Vollbild im Elternbereich.
-- Korrektur eines HTML-Layoutfehlers der bisherigen Maloberfläche.
-- Neuer PWA-Cache für Version 1.2.
+Auf dem iPad in Safari öffnen, über **Teilen → Zum Home-Bildschirm** installieren. Die App anschließend einmal mit Internet vollständig laden und im Flugmodus prüfen. Für eine Beschränkung auf die App **Geführten Zugriff** in iPadOS aktivieren.
 
-## Auf dem iPad installieren
+## 14 Aktivitäten
+- Freies Finger-Malen mit Zauberpinsel, Stempel und Radierer
+- 10 Ausmalbilder: Fisch, Blume, Haus, Schmetterling, Auto, Luftballons, Sonne, Baum, Katze, Rakete
+- Stickerbuch mit drei Landschaften und 36 Stickern; Szenen bleiben lokal gespeichert
+- Zauberbilder mit fünf verdeckten Motiven zum Freiwischen
+- Farben und Formen, Tierpuzzle, Farben mischen, Seifenblasen, Tiere füttern
+- Tierbabys mit den richtigen Elterntieren zusammenbringen
+- Tierlaute, Blumen wachsen lassen, Sternenhimmel
+- Musik-Ecke mit Xylophon, Trommel, Glöckchen und Rassel
 
-1. https://dennodhn.github.io/bunte-welt-/ in Safari öffnen.
-2. Teilen → Zum Home-Bildschirm → Als Web-App öffnen (falls angezeigt) → Hinzufügen.
-3. Als App vom Home-Bildschirm starten; die Safari-Adressleiste entfällt.
-4. Flugmodus aktivieren und die App testen.
+## Familienfunktionen
+Vier Lieblingsspiele auf der Startseite, optionaler Kindername, Spielstufe, Farbwelt, vergrößerter Spielmodus, Ruhemodus, Eltern-PIN.
 
-**Hinweis:** Der Fokusmodus nutzt den verfügbaren App-Bildschirm. Je nach iPadOS-Version bleiben Systemleisten sichtbar; eine Website kann diese nicht verlässlich ausschalten. Für einen geschützten Bereich den iPad-*Geführten Zugriff* einschalten.
+## Bilder und Backups
+Bilder liegen auf dem jeweiligen Gerät in IndexedDB. Im Elternbereich kann man einzelne Kunstwerke exportieren oder löschen und das gesamte Familien-Archiv als **JSON-Backup** einschließlich Ausmalfortschritt, Stickerbildern und Einstellungen sichern und wiederherstellen. Die Eltern-PIN wird nicht exportiert. Nach der Wiederherstellung bleiben bestehende Malentwürfe unangetastet.
 
-## Datenschutz
+**Wichtig:** iPadOS kann lokalen Browser-Speicher unter bestimmten Umständen entfernen. Wichtige Bilder regelmäßig außerhalb der App sichern. Der echte iPad-Test ist noch ausstehend.
 
-Die Einstellungen sowie Zeichnungen liegen nur im Browser-/Web-App-Speicher des jeweiligen Geräts. Die App enthält kein Tracking und sendet keine Bilder an GitHub. Gezeichnete Bilder regelmäßig aus dem Elternbereich exportieren; bei Löschen der Website-Daten können sie verloren gehen. Familien verwenden jeweils ihre eigenen lokalen Daten, kein Login erforderlich.
+## Technik
+Statische PWA mit `index.html`, `style.css`, `extra.js`, `app.js`, `sw.js`, `manifest.webmanifest` und `icons/`. Keine externen Bibliotheken, keine Werbung, kein Tracking, keine Server-Datenbank.
 
-## Dateien
-
-- index.html: HTML-Einstieg
-- style.css: Layout und Fokus-Modus
-- app.js: Spiele, Malen, Eltern-Einstellungen, Galerie
-- manifest.webmanifest: PWA-Einstellungen
-- sw.js: Offline-Cache
-- icons: App-Icons
-
-Die Änderung wurde im simulierten iPad-Hoch-/Querformat und im mobilen Testbrowser geprüft; ein Test auf echtem iPad und Safari ist weiterhin erforderlich.
+**GitHub:** `main` ist die veröffentlichte Version. Backup: `backup/v1.2-before-v1.3`; Entwicklung: `feature/v1.3-kreativwelt`.
