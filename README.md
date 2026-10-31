@@ -1,43 +1,35 @@
-# Meine bunte Welt 🌈
+# Meine bunte Welt – Version 1.2
 
-Eine werbefreie, kinderfreundliche Mal- und Spielwelt für das iPad – vollständig offline nutzbar nach der ersten Installation.
+Offline-fähige, werbefreie Mal- und Spielwelt für Kinder, die von Familien auf dem eigenen Gerät genutzt werden kann. Keine Registrierung, keine Cloud-Konten, keine Werbung.
 
-## Enthaltene Spiele und Funktionen
+## Neu in Version 1.2
 
-- Freies Malen, Zauberpinsel und Ausmalen mit 6 Vorlagen
-- Farbenmischen, Farben und Formen erkennen
-- Einfache Tierpuzzles, Seifenblasen und Tiergeräusche
-- Tiere füttern, Garten wachsen lassen, Sternenhimmel
-- Automatisches Speichern, Bildergalerie und Eltern-PIN
-- Keine Werbung, Registrierung, Tracker oder externen Server
-
-## In GitHub Pages veröffentlichen
-
-1. Auf dieser Repository-Seite unter **Settings → General → Danger Zone → Change repository visibility** die Sichtbarkeit auf **Public** ändern. Dafür musst du angemeldet sein; der Quellcode wird dadurch öffentlich, nicht die lokal gespeicherten Zeichnungen.
-2. **Settings → Pages → Build and deployment → Deploy from a branch** auswählen.
-3. Als Branch **main** und Ordner **/(root)** auswählen, dann **Save**.
-4. Nach erfolgreicher Veröffentlichung lautet die Adresse:
-   **https://dennodhn.github.io/bunte-welt-/**
+- Großer Spielmodus: Malfläche und Spiele füllen den verfügbaren App-Bereich aus.
+- Ein Knopf wechselt zwischen Fokusmodus und normaler Ansicht.
+- Optionaler Kindername, Alters-/Schwierigkeitsstufe, drei Farbwelten, Standard-Vollbild im Elternbereich.
+- Korrektur eines HTML-Layoutfehlers der bisherigen Maloberfläche.
+- Neuer PWA-Cache für Version 1.2.
 
 ## Auf dem iPad installieren
 
-Die veröffentlichte Adresse in **Safari** öffnen, auf **Teilen → Zum Home-Bildschirm** tippen und die Web-App hinzufügen. Einmal mit Internet vollständig laden; danach den Offline-Betrieb im Flugmodus testen.
+1. https://dennodhn.github.io/bunte-welt-/ in Safari öffnen.
+2. Teilen → Zum Home-Bildschirm → Als Web-App öffnen (falls angezeigt) → Hinzufügen.
+3. Als App vom Home-Bildschirm starten; die Safari-Adressleiste entfällt.
+4. Flugmodus aktivieren und die App testen.
 
-Um das iPad auf die Kinder-App zu beschränken, **Einstellungen → Bedienungshilfen → Geführter Zugriff** aktivieren.
+**Hinweis:** Der Fokusmodus nutzt den verfügbaren App-Bildschirm. Je nach iPadOS-Version bleiben Systemleisten sichtbar; eine Website kann diese nicht verlässlich ausschalten. Für einen geschützten Bereich den iPad-*Geführten Zugriff* einschalten.
 
-## Daten & Sicherheit
+## Datenschutz
 
-Zeichnungen bleiben ausschließlich im lokalen Browser-/App-Speicher des jeweiligen iPads, nicht auf GitHub. Der Elternbereich bietet Bildexport und Sicherung. Für wichtige Bilder regelmäßig ein Backup durchführen. Löschen der Website-Daten kann Zeichnungen entfernen.
+Die Einstellungen sowie Zeichnungen liegen nur im Browser-/Web-App-Speicher des jeweiligen Geräts. Die App enthält kein Tracking und sendet keine Bilder an GitHub. Gezeichnete Bilder regelmäßig aus dem Elternbereich exportieren; bei Löschen der Website-Daten können sie verloren gehen. Familien verwenden jeweils ihre eigenen lokalen Daten, kein Login erforderlich.
 
-**Version:** 1.1. Der vollständige Test auf einem echten iPad ist noch offen.
+## Dateien
 
-## Technischer Aufbau
+- index.html: HTML-Einstieg
+- style.css: Layout und Fokus-Modus
+- app.js: Spiele, Malen, Eltern-Einstellungen, Galerie
+- manifest.webmanifest: PWA-Einstellungen
+- sw.js: Offline-Cache
+- icons: App-Icons
 
-- `index.html`: Einstiegspunkt
-- `style.css`: responsives Layout
-- `app.js`: Spiele, Mal-Engine, Galerie, Elternbereich
-- `manifest.webmanifest`: PWA-Installation
-- `sw.js`: Offline-Cache
-- `icons/icon.svg`: App-Symbol
-
-Statisches Projekt ohne Backend, Datenbank oder externe Abhängigkeiten.
+Die Änderung wurde im simulierten iPad-Hoch-/Querformat und im mobilen Testbrowser geprüft; ein Test auf echtem iPad und Safari ist weiterhin erforderlich.
