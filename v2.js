@@ -100,6 +100,7 @@ function v2Draw(){
   <div class="v2-studio-surface" id="studio-surface"><canvas id="studio-canvas" aria-label="Malfläche. Male mit deinem Finger oder einem Stift."></canvas><canvas id="studio-outline" aria-hidden="true"></canvas></div>
   <nav class="v2-studio-top" aria-label="Blatt wählen">
    <button id="studio-parent" aria-label="Elternbereich">${v2Icon('gear',18)}</button>
+   <button id="studio-sounds" aria-label="Klangwelt öffnen">🎵</button>
    <div class="brush-anchor">
     <button id="brush-toggle" aria-controls="brush-options" aria-expanded="false" aria-label="Malwerkzeug: ${brush.name}">${brush.symbol}</button>
     <div id="brush-options" role="group" aria-label="Strichstärke wählen" hidden>
@@ -225,6 +226,7 @@ function v2Draw(){
   picker.hidden=open!=='motifs';
   document.getElementById('studio-motifs').setAttribute('aria-expanded',String(!picker.hidden));
  }
+ on('studio-sounds','click',()=>{if(ready&&!busy&&pointer===null)route('soundboard');});
  on('studio-parent','click',()=>{if(!busy)openParentGate();});
  on('studio-motifs','click',()=>{if(ready&&!busy)setPicker(picker.hidden?'motifs':false);});
  on('studio-new','click',()=>nextSheet());
