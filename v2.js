@@ -189,7 +189,7 @@ function v2Draw(){
    b.classList.toggle('selected',selected);
    b.setAttribute('aria-pressed',String(selected));
   });
-  setPicker(extras.hidden?false:'colors');
+  setPicker(false);
  };
  app.querySelectorAll('.v2-color').forEach(b=>b.addEventListener('click',()=>changeColor(b)));
  const picker=document.getElementById('motif-options');
