@@ -67,9 +67,9 @@ function v2Gallery(){
      const tx=database.transaction('pictures','readwrite');
      const pictures=tx.objectStore('pictures');
      if(saved?.data&&saved.hasInk!==false&&saved.data!==selected.data){
-      pictures.put({id:'img-'+Date.now()+'-previous',type:'gallery',label:'Mein Bild',data:saved.data,profile,created:Date.now()});
+      pictures.put({id:'img-'+Date.now()+'-previous',type:'gallery',label:'Mein Bild',data:saved.data,outline:saved.outline,profile,created:Date.now()});
      }
-     pictures.put({id,type:'draft',label:'Mein Bild',data:selected.data,profile,hasInk:true,created:Date.now()});
+     pictures.put({id,type:'draft',label:'Mein Bild',data:selected.data,outline:selected.outline,profile,hasInk:true,created:Date.now()});
      tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
     });
     if(el.isConnected)route('draw');
@@ -96,7 +96,7 @@ function v2Draw(){
   return `<button class="v2-color ${hex===color?'selected':''}" style="--swatch:${hex}" data-c="${hex}" aria-label="${name}" aria-pressed="${hex===color}"></button>`;
  }
  app.innerHTML=`<section class="v2-studio" aria-label="Freies Malen">
-  <div class="v2-studio-surface" id="studio-surface"><canvas id="studio-canvas" aria-label="Malfläche. Male mit deinem Finger oder einem Stift."></canvas></div>
+  <div class="v2-studio-surface" id="studio-surface"><canvas id="studio-canvas" aria-label="Malfläche. Male mit deinem Finger oder einem Stift."></canvas><canvas id="studio-outline" aria-hidden="true"></canvas></div>
   <nav class="v2-studio-top" aria-label="Blatt wählen">
    <button id="studio-parent" aria-label="Elternbereich">${v2Icon('gear',18)}</button>
    <div class="brush-anchor">
@@ -115,23 +115,42 @@ function v2Draw(){
   </div>
   <div class="mini-motifs mini-extra" id="extra-colors" role="group" aria-label="Weitere Malfarben" hidden>${extraColors.map(swatch).join('')}</div>
   <div class="mini-motifs" id="motif-options" role="group" aria-label="Ausmalmotive" hidden>
-   ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus']].map(([id,symbol,name])=>`<button data-sheet="${id}" aria-label="${name}">${symbol}</button>`).join('')}
+   ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus'],['butterfly','🦋','Schmetterling'],['car','🚗','Auto'],['balloons','🎈','Luftballons'],['sun','☀️','Sonne'],['tree','🌳','Baum'],['cat','🐱','Katze'],['rocket','🚀','Rakete']].map(([id,symbol,name])=>`<button data-sheet="${id}" aria-label="${name}">${symbol}</button>`).join('')}
   </div>
  </section>`;
  const canvas=document.getElementById('studio-canvas'),stage=document.getElementById('studio-surface');
  const ctx=canvas.getContext('2d',{alpha:false}),dpr=Math.min(2,window.devicePixelRatio||1);
+ const overlay=document.getElementById('studio-outline');
+ let outline=null;
+ function fitImage(target,image){
+  const scale=Math.min(target.width/image.width,target.height/image.height);
+  const w=image.width*scale,h=image.height*scale;
+  target.getContext('2d').drawImage(image,(target.width-w)/2,(target.height-h)/2,w,h);
+ }
+ function resizeOutline(){
+  const previous=outline?overlay.cloneNode():null;
+  if(previous)previous.getContext('2d').drawImage(overlay,0,0);
+  overlay.width=canvas.width;overlay.height=canvas.height;
+  if(previous){fitImage(overlay,previous);outline=overlay.toDataURL();}
+ }
  let W=0,H=0,paper='#FFFFFF';
  function fillPaper(){ctx.save();ctx.fillStyle=paper;ctx.fillRect(0,0,W,H);ctx.restore();}
  function resize(){const r=stage.getBoundingClientRect();if(r.width<40||r.height<40||(W===r.width&&H===r.height))return;
   const prev=W&&H?document.createElement('canvas'):null;if(prev){prev.width=canvas.width;prev.height=canvas.height;prev.getContext('2d').drawImage(canvas,0,0);}
-  W=r.width;H=r.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);fillPaper();if(prev){const ratio=Math.min(W/(prev.width/dpr),H/(prev.height/dpr)),nw=prev.width/dpr*ratio,nh=prev.height/dpr*ratio;ctx.drawImage(prev,0,0,prev.width,prev.height,(W-nw)/2,(H-nh)/2,nw,nh);}
+  W=r.width;H=r.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);resizeOutline();fillPaper();if(prev){const ratio=Math.min(W/(prev.width/dpr),H/(prev.height/dpr)),nw=prev.width/dpr*ratio,nh=prev.height/dpr*ratio;ctx.drawImage(prev,0,0,prev.width,prev.height,(W-nw)/2,(H-nh)/2,nw,nh);}
  }
  resize();const watcher=typeof ResizeObserver!=='undefined'?new ResizeObserver(()=>resize()):null;watcher?.observe(stage);
  const indicator=document.getElementById('studio-save-state');
  const setStatus=msg=>{if(indicator)indicator.textContent=msg;};
- function serialize(){return canvas.toDataURL('image/png');}
+ function serialize(){
+  if(!outline)return canvas.toDataURL();
+  const result=canvas.cloneNode();
+  const context=result.getContext('2d');
+  context.drawImage(canvas,0,0);context.drawImage(overlay,0,0);
+  return result.toDataURL();
+ }
  function saveDraft(force=false){if(!ready||busy||(!dirty&&!force))return queue;const revision=rev,data=serialize();setStatus('Speichert …');clearTimeout(saveTimer);saveTimer=null;
-  queue=writeDraftInOrder({id:draftId,type:'draft',data,profile,created:Date.now(),hasInk:ink});
+  queue=writeDraftInOrder({id:draftId,type:'draft',data,outline,profile,created:Date.now(),hasInk:ink});
   queue.then(()=>{if(rev===revision){dirty=false;setStatus('✓ Gesichert');}}).catch(()=>setStatus('⚠ Nicht gespeichert'));
   return queue;
  }
@@ -142,7 +161,7 @@ function v2Draw(){
  canvas.addEventListener('pointerdown',e=>{
   if(!ready||busy||pointer!==null||e.button!==0)return;
   e.preventDefault();
-  setPicker(false);
+  if(extras.hidden)setPicker(false);
   pointer=e.pointerId;
   previous=xy(e);
   ctx.fillStyle=color;
@@ -170,7 +189,7 @@ function v2Draw(){
    b.classList.toggle('selected',selected);
    b.setAttribute('aria-pressed',String(selected));
   });
-  setPicker(false);
+  setPicker(extras.hidden?false:'colors');
  };
  app.querySelectorAll('.v2-color').forEach(b=>b.addEventListener('click',()=>changeColor(b)));
  const picker=document.getElementById('motif-options');
@@ -179,7 +198,7 @@ function v2Draw(){
  function updatePalette(){
   const active=extraColors.find(([,hex])=>hex===color);
   paletteButton.style.background=active?color:'';
-  paletteButton.textContent=active?'✓':'🎨';
+
   paletteButton.setAttribute('aria-label',active?'Weitere Farben, gewählt: '+active[0]:'Weitere Farben');
  }
  updatePalette();
@@ -215,21 +234,41 @@ function v2Draw(){
   try{
    await draftWriteQueue;
    const old=ink?serialize():null;
+   let lines=null;
    const tmp=document.createElement('canvas');tmp.width=canvas.width;tmp.height=canvas.height;const t=tmp.getContext('2d');t.fillStyle=paper;t.fillRect(0,0,tmp.width,tmp.height);if(motif){
     const image=new Image();
     const svg=templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff');
     await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);});
     const scale=Math.min(tmp.width/720,tmp.height*.72/480);
     t.drawImage(image,(tmp.width-720*scale)/2,(tmp.height-480*scale)/2,720*scale,480*scale);
+    // Lift the printed lines from the untouched template, before the first finger stroke.
+    lines=tmp.cloneNode();
+    const raster=t.getImageData(0,0,tmp.width,tmp.height);
+    for(let i=0;i<raster.data.length;i+=4){
+     if(raster.data[i]>180&&raster.data[i+1]>180&&raster.data[i+2]>180)raster.data[i+3]=0;
+    }
+    lines.getContext('2d').putImageData(raster,0,0);
    }
+   const newOutline=lines?lines.toDataURL():null;
    const blank=tmp.toDataURL('image/png');
-   const database=await db();const picId='img-'+Date.now()+'-'+Math.floor(Math.random()*100000);const galleryPicture=old?{id:picId,type:'gallery',label:'Mein Bild',data:old,profile,created:Date.now()}:null;
-   await new Promise((resolve,reject)=>{const tx=database.transaction('pictures','readwrite'),os=tx.objectStore('pictures');if(galleryPicture)os.put(galleryPicture);os.put({id:draftId,type:'draft',data:blank,profile,created:Date.now(),hasInk:false});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Speicherfehler'));tx.onabort=()=>reject(tx.error||new Error('Speicher abgebrochen'));});
+   const database=await db();const picId='img-'+Date.now()+'-'+Math.floor(Math.random()*100000);const galleryPicture=old?{id:picId,type:'gallery',label:'Mein Bild',data:old,outline,profile,created:Date.now()}:null;
+   await new Promise((resolve,reject)=>{const tx=database.transaction('pictures','readwrite'),os=tx.objectStore('pictures');if(galleryPicture)os.put(galleryPicture);os.put({id:draftId,type:'draft',data:blank,outline:newOutline,profile,created:Date.now(),hasInk:false});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Speicherfehler'));tx.onabort=()=>reject(tx.error||new Error('Speicher abgebrochen'));});
+   overlay.getContext('2d').clearRect(0,0,overlay.width,overlay.height);
+   if(lines)overlay.getContext('2d').drawImage(lines,0,0,overlay.width,overlay.height);
+   outline=lines?overlay.toDataURL():null;
    fillPaper();ctx.drawImage(tmp,0,0,W,H);ink=false;dirty=false;rev++;setStatus(old?'✓ Bild gesichert':'✓ Neues Blatt');beep();
   }catch(e){setStatus('⚠ Bitte erneut versuchen');toast('Das Bild konnte nicht gespeichert werden.');}
   finally{busy=false;}
  }
- draftWriteQueue.then(()=>getPic(draftId)).then(saved=>{if(saved?.data){restoreImage(saved.data,()=>{ink=saved.hasInk===undefined?true:!!saved.hasInk;ready=true;setStatus('✓ Bereit');});}else{ready=true;setStatus('✓ Bereit');}}).catch(()=>{ready=true;setStatus('⚠ Lokaler Speicher prüfen');});
+ draftWriteQueue.then(()=>getPic(draftId)).then(async saved=>{
+  if(saved?.outline){
+   const image=new Image();
+   image.src=saved.outline;
+   await image.decode();
+   fitImage(overlay,image);
+   outline=overlay.toDataURL();
+  }
+  if(saved?.data){restoreImage(saved.data,()=>{ink=saved.hasInk===undefined?true:!!saved.hasInk;ready=true;setStatus('✓ Bereit');});}else{ready=true;setStatus('✓ Bereit');}}).catch(()=>{ready=true;setStatus('⚠ Lokaler Speicher prüfen');});
  const onHide=()=>{if(document.visibilityState==='hidden')saveDraft();};const onPage=()=>saveDraft();document.addEventListener('visibilitychange',onHide);window.addEventListener('pagehide',onPage);
  cleanup.push(()=>{document.body.classList.remove('studio-active');clearTimeout(saveTimer);watcher?.disconnect();document.removeEventListener('visibilitychange',onHide);window.removeEventListener('pagehide',onPage);if(dirty&&!busy)saveDraft();});
 }

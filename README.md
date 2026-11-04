@@ -3,7 +3,7 @@
 Die iPad-App öffnet direkt ein weißes Malblatt oder den letzten lokalen Entwurf. Mit dem Finger malen, die Farbe wechseln und ein neues Blatt anfangen sind direkt erreichbar.
 
 - Rot, Gelb, Grün und Blau liegen unten auf dem Blatt. Die Palette öffnet acht weitere Farben.
-- Der Fisch öffnet drei Vorlagen zum freien Ausmalen.
+- Der Fisch öffnet zehn Vorlagen mit geschützten Konturen zum freien Ausmalen.
 - „Neues Blatt“ sichert eine bemalte Seite in der Galerie. Unbenutzte Blätter erzeugen keinen Galerieeintrag.
 - Das Zahnrad öffnet den PIN-geschützten Elternbereich mit Galerie, Kinderprofilen, Sicherung und Spielauswahl. Dort steht auch die geladene App-Version.
 
