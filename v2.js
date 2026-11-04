@@ -72,8 +72,9 @@ function v2Draw(){
  document.body.classList.add('studio-active');
  const profile=v2Profile(),draftId=v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
+ const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830'],['Weiß','#FFFFFF']];
  const savedColor=store.get('v2-color',chips[0][1]);
- let color=chips.some(([,hex])=>hex===savedColor)?savedColor:chips[0][1];
+ let color=[...chips,...extraColors].some(([,hex])=>hex===savedColor)?savedColor:chips[0][1];
  let ink=false,ready=false,busy=false,pointer=null,previous=null,dirty=false,rev=0,queue=Promise.resolve(),saveTimer=null;
  function swatch([name,hex]){
   return `<button class="v2-color ${hex===color?'selected':''}" style="--swatch:${hex}" data-c="${hex}" aria-label="${name}" aria-pressed="${hex===color}"></button>`;
@@ -87,8 +88,10 @@ function v2Draw(){
   <span class="sr-only" id="studio-save-state" role="status"></span>
   <div class="mini-tray">
    <div class="mini-colors" role="group" aria-label="Farben">${chips.map(swatch).join('')}</div>
+   <button id="studio-colors" aria-label="Weitere Farben" aria-controls="extra-colors" aria-expanded="false">🎨</button>
    <button id="studio-motifs" aria-label="Ausmalmotiv wählen" aria-expanded="false">🐠</button>
   </div>
+  <div class="mini-motifs mini-extra" id="extra-colors" role="group" aria-label="Weitere Malfarben" hidden>${extraColors.map(swatch).join('')}</div>
   <div class="mini-motifs" id="motif-options" role="group" aria-label="Ausmalmotive" hidden>
    ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus']].map(([id,symbol,name])=>`<button data-sheet="${id}" aria-label="${name}">${symbol}</button>`).join('')}
   </div>
@@ -139,6 +142,7 @@ function v2Draw(){
  const changeColor=button=>{
   color=button.dataset.c;
   store.set('v2-color',color);
+  updatePalette();
   app.querySelectorAll('.v2-color').forEach(b=>{
    const selected=b.dataset.c===color;
    b.classList.toggle('selected',selected);
@@ -148,12 +152,24 @@ function v2Draw(){
  };
  app.querySelectorAll('.v2-color').forEach(b=>b.addEventListener('click',()=>changeColor(b)));
  const picker=document.getElementById('motif-options');
+ const paletteButton=document.getElementById('studio-colors');
+ const extras=document.getElementById('extra-colors');
+ function updatePalette(){
+  const active=extraColors.find(([,hex])=>hex===color);
+  paletteButton.style.background=active?color:'';
+  paletteButton.textContent=active?'✓':'🎨';
+  paletteButton.setAttribute('aria-label',active?'Weitere Farben, gewählt: '+active[0]:'Weitere Farben');
+ }
+ updatePalette();
+ on('studio-colors','click',()=>setPicker(extras.hidden?'colors':false));
  function setPicker(open){
-  picker.hidden=!open;
-  document.getElementById('studio-motifs').setAttribute('aria-expanded',String(open));
+  extras.hidden=open!=='colors';
+  paletteButton.setAttribute('aria-expanded',String(!extras.hidden));
+  picker.hidden=open!=='motifs';
+  document.getElementById('studio-motifs').setAttribute('aria-expanded',String(!picker.hidden));
  }
  on('studio-parent','click',()=>{if(!busy)openParentGate();});
- on('studio-motifs','click',()=>{if(ready&&!busy)setPicker(picker.hidden);});
+ on('studio-motifs','click',()=>{if(ready&&!busy)setPicker(picker.hidden?'motifs':false);});
  on('studio-new','click',()=>nextSheet());
  picker.querySelectorAll('[data-sheet]').forEach(button=>button.addEventListener('click',()=>nextSheet(button.dataset.sheet)));
  async function nextSheet(motif){

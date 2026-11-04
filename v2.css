@@ -100,3 +100,8 @@ body.focus-mode #motif-picker .chip-row{justify-content:flex-start}
 .mini-motifs[hidden]{display:none}
 #studio-motifs[aria-expanded=true]{outline:3px solid #526b73}
 body.studio-active #app{position:fixed;padding:0}
+#studio-colors{width:clamp(48px,7vw,64px);height:clamp(48px,7vw,64px);flex:none;border-radius:50%;padding:0;background:#f5f4ef;font-size:28px;color:#fff;text-shadow:0 1px 3px #28303a}
+#studio-colors[aria-expanded=true]{outline:3px solid #526b73}
+.mini-extra{display:grid;grid-template-columns:repeat(4,auto)}
+.mini-extra .v2-color{background:var(--swatch)}
+@media(max-width:390px){.mini-tray,.mini-colors{gap:3px}.mini-tray{padding:6px}}
