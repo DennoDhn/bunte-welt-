@@ -89,3 +89,14 @@ body.focus-mode:not(.studio-active) .focus-float #focus-tool{display:none}
 body.focus-mode .coloring-panel{padding-top:56px}
 body.focus-mode #motif-picker{order:2;flex:none}
 body.focus-mode #motif-picker .chip-row{justify-content:flex-start}
+
+/* Das Malblatt hat an jedem Gerät dieselben vier Farben und zwei Bildaktionen. */
+#studio-parent{pointer-events:auto;display:grid;place-items:center;width:46px;height:46px;padding:0;background:white;color:#74818a}
+.mini-tray,.mini-motifs{position:absolute;z-index:6;display:flex;align-items:center;gap:12px;background:white;border:1px solid #e5e4de;box-shadow:0 4px 18px #36425214;border-radius:32px;padding:8px;bottom:calc(12px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}
+.mini-colors{display:flex;gap:10px}
+.mini-colors .v2-color,#studio-motifs,.mini-motifs button{width:clamp(48px,7vw,64px);height:clamp(48px,7vw,64px);min-height:48px;padding:0}
+#studio-motifs,.mini-motifs button{display:grid;place-items:center;border-radius:50%;background:#f5f4ef;font-size:30px}
+.mini-motifs{bottom:calc(106px + env(safe-area-inset-bottom))}
+.mini-motifs[hidden]{display:none}
+#studio-motifs[aria-expanded=true]{outline:3px solid #526b73}
+body.studio-active #app{position:fixed;padding:0}

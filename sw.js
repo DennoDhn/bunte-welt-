@@ -1,5 +1,5 @@
 /* Meine bunte Welt – Offline-Shell v1.3.0 */
-const CACHE = 'bunte-welt-v2.1.0';
+const CACHE = 'bunte-welt-v2.2.0';
 const ASSETS = [
   './', './index.html', './style.css', './v2.css', './extra.js', './v2.js', './app.js',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'

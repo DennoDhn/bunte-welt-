@@ -71,24 +71,31 @@ function v2Gallery(){
 function v2Draw(){
  document.body.classList.add('studio-active');
  const profile=v2Profile(),draftId=v2DraftId();
- const savedColor=store.get('v2-color','#E87586');
- let color=typeof savedColor==='string'?savedColor:'#E87586',mode='brush',size=22,ink=false,ready=false,busy=false,pointer=null,previous=null,previousPrevious=null,dirty=false,rev=0,queue=Promise.resolve(),saveTimer=null;
- const undo=[],redo=[];
- const chips=[['Rosa','#E87586'],['Orange','#E9A75A'],['Gelb','#E5C65C'],['Grün','#77B68D'],['Blau','#78ABDC'],['Lila','#B499DD'],['Dunkelgrau','#4F596B'],['Weiß','#FFFFFF']];
- const toolSymbols={brush:'🖌️',crayon:'🖍️',marker:'🖊️',chalk:'✏️',rainbow:'🌈',eraser:'🧽',star:'⭐'};
+ const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
+ const savedColor=store.get('v2-color',chips[0][1]);
+ let color=chips.some(([,hex])=>hex===savedColor)?savedColor:chips[0][1];
+ let ink=false,ready=false,busy=false,pointer=null,previous=null,dirty=false,rev=0,queue=Promise.resolve(),saveTimer=null;
  function swatch([name,hex]){
   return `<button class="v2-color ${hex===color?'selected':''}" style="--swatch:${hex}" data-c="${hex}" aria-label="${name}" aria-pressed="${hex===color}"></button>`;
  }
  app.innerHTML=`<section class="v2-studio" aria-label="Freies Malen">
   <div class="v2-studio-surface" id="studio-surface"><canvas id="studio-canvas" aria-label="Malfläche. Male mit deinem Finger oder einem Stift."></canvas></div>
-  <nav class="v2-studio-top" aria-label="Malen-Navigation"><button id="studio-back" class="v2-floating-icon" aria-label="Zurück">${v2Icon('back',29)}</button><div class="v2-studio-top-right"><span class="v2-save-indicator" id="studio-save-state" aria-live="polite"></span><button id="studio-gallery" class="v2-floating-icon" aria-label="Meine Bilder">${v2Icon('gallery',27)}</button><button id="studio-new" class="v2-new-sheet" aria-label="Neues Blatt beginnen. Altes Bild wird gespeichert.">${v2Icon('new',29)}<span>Neues Blatt</span></button></div></nav>
-  <div class="v2-studio-bottom"><div class="v2-dock" aria-label="Malwerkzeuge"><button id="studio-brush" class="v2-dock-tool selected" aria-label="Pinsel und Malwerkzeuge">${v2Icon('brush')}</button><div class="v2-color-dock">${chips.slice(0,6).map(swatch).join('')}</div><button id="studio-undo" class="v2-dock-tool" aria-label="Rückgängig">${v2Icon('undo',26)}</button><button id="studio-more" class="v2-dock-tool" aria-label="Weitere Optionen">${v2Icon('more',26)}</button></div></div>
-  <div id="studio-tool-menu" class="v2-tool-menu" hidden><h2>Alle Farben</h2><div class="v2-all-colors">${chips.map(swatch).join('')}</div><h2>Mein Pinsel</h2><div class="v2-tool-options">${[['brush','Pinsel'],['crayon','Wachsmaler'],['marker','Filzstift'],['chalk','Kreide'],['rainbow','Regenbogen'],['eraser','Radierer'],['star','Sterne']].map(([m,n])=>`<button data-mode="${m}" class="${m===mode?'chosen':''}"><span class="tool-picture" aria-hidden="true">${toolSymbols[m]}</span>${n}</button>`).join('')}</div><h2>Pinselgröße</h2><div class="v2-size-options">${[5,11,22,36].map(n=>`<button data-width="${n}" aria-label="Pinselbreite ${n}" class="${n===size?'chosen':''}"><span style="height:${Math.min(n,24)}px;width:${Math.min(n,24)}px"></span></button>`).join('')}</div></div>
-  <div class="v2-more-menu" id="studio-more-menu" hidden><button id="studio-redo">${v2Icon('redo',22)} Wiederholen</button><button id="studio-paper">Papierfarbe ändern</button><button id="studio-share">Bild in Galerie speichern</button><button id="studio-help">So funktioniert Malen</button></div>
+  <nav class="v2-studio-top" aria-label="Blatt wählen">
+   <button id="studio-parent" aria-label="Elternbereich">${v2Icon('gear',18)}</button>
+   <button id="studio-new" class="v2-new-sheet" aria-label="Neues Blatt">${v2Icon('new',32)} Neues Blatt</button>
+  </nav>
+  <span class="sr-only" id="studio-save-state" role="status"></span>
+  <div class="mini-tray">
+   <div class="mini-colors" role="group" aria-label="Farben">${chips.map(swatch).join('')}</div>
+   <button id="studio-motifs" aria-label="Ausmalmotiv wählen" aria-expanded="false">🐠</button>
+  </div>
+  <div class="mini-motifs" id="motif-options" role="group" aria-label="Ausmalmotive" hidden>
+   ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus']].map(([id,symbol,name])=>`<button data-sheet="${id}" aria-label="${name}">${symbol}</button>`).join('')}
+  </div>
  </section>`;
  const canvas=document.getElementById('studio-canvas'),stage=document.getElementById('studio-surface');
  const ctx=canvas.getContext('2d',{alpha:false}),dpr=Math.min(2,window.devicePixelRatio||1);
- let W=0,H=0,paper=store.get('v2-paper','#FFFFFF');
+ let W=0,H=0,paper='#FFFFFF';
  function fillPaper(){ctx.save();ctx.fillStyle=paper;ctx.fillRect(0,0,W,H);ctx.restore();}
  function resize(){const r=stage.getBoundingClientRect();if(r.width<40||r.height<40||(W===r.width&&H===r.height))return;
   const prev=W&&H?document.createElement('canvas'):null;if(prev){prev.width=canvas.width;prev.height=canvas.height;prev.getContext('2d').drawImage(canvas,0,0);}
@@ -104,15 +111,30 @@ function v2Draw(){
   return queue;
  }
  function scheduleSave(){dirty=true;rev++;clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveDraft(),650);}
- function remember(){try{undo.push(serialize());if(undo.length>15)undo.shift();redo.length=0;}catch{}}
  function restoreImage(data,then){let image=new Image();image.onload=()=>{fillPaper();const scale=Math.min(W/image.width,H/image.height),w=image.width*scale,h=image.height*scale;ctx.drawImage(image,(W-w)/2,(H-h)/2,w,h);then?.();};image.onerror=()=>then?.();image.src=data;}
  function xy(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
- function dot(p){ctx.save();ctx.globalAlpha=mode==='chalk'?.55:mode==='marker'?.72:1;ctx.fillStyle=mode==='eraser'?paper:mode==='rainbow'?'#A89DE7':color;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(2,size/2),0,Math.PI*2);ctx.fill();ctx.restore();}
- function star(p){ctx.save();ctx.fillStyle=color;ctx.beginPath();for(let i=0;i<10;i++){let a=(i*Math.PI/5)-Math.PI/2,r=i%2?size*.75:size*1.7,x=p.x+r*Math.cos(a),y=p.y+r*Math.sin(a);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y);}ctx.closePath();ctx.fill();ctx.restore();}
- function segment(p,q){ctx.save();ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=mode==='eraser'?Math.max(25,size*2.1):size;ctx.globalAlpha=mode==='chalk'?.56:mode==='marker'?.67:1;ctx.strokeStyle=mode==='eraser'?paper:mode==='rainbow'?`hsl(${(p.x+p.y)*.35%360} 82% 63%)`:color;
-  if(mode==='crayon'){ctx.globalAlpha=.86;ctx.lineWidth=size*1.25;}ctx.beginPath();ctx.moveTo(q.x,q.y);ctx.quadraticCurveTo(q.x,q.y,p.x,p.y);ctx.stroke();ctx.restore();}
- canvas.addEventListener('pointerdown',e=>{if(!ready||busy||pointer!==null||(e.pointerType==='mouse'&&e.button!==0))return;e.preventDefault();pointer=e.pointerId;remember();previous=xy(e);previousPrevious=previous;ink=true; if(mode==='star')star(previous);else dot(previous);scheduleSave();try{canvas.setPointerCapture(pointer)}catch{}});
- canvas.addEventListener('pointermove',e=>{if(pointer!==e.pointerId||busy)return;e.preventDefault();const p=xy(e);if(mode==='star'){if(Math.hypot(p.x-previous.x,p.y-previous.y)>size*4){star(p);previous=p;}}else{segment(p,previous);previousPrevious=previous;previous=p;}ink=true;dirty=true;rev++;});
+ const radius=11;
+ canvas.addEventListener('pointerdown',e=>{
+  if(!ready||busy||pointer!==null||e.button!==0)return;
+  e.preventDefault();
+  setPicker(false);
+  pointer=e.pointerId;
+  previous=xy(e);
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  ctx.arc(previous.x,previous.y,radius,0,Math.PI*2);
+  ctx.fill();
+  ink=true;
+  scheduleSave();
+  canvas.setPointerCapture(pointer);
+ });
+ canvas.addEventListener('pointermove',e=>{
+  if(pointer!==e.pointerId||busy)return;
+  const p=xy(e);
+  ctx.lineCap='round';ctx.lineWidth=radius*2;ctx.strokeStyle=color;
+  ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(p.x,p.y);ctx.stroke();
+  previous=p;dirty=true;rev++;
+ });
  const finish=e=>{if(e.pointerId!==pointer)return;pointer=null;scheduleSave();};for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,finish);
  const changeColor=button=>{
   color=button.dataset.c;
@@ -122,37 +144,39 @@ function v2Draw(){
    b.classList.toggle('selected',selected);
    b.setAttribute('aria-pressed',String(selected));
   });
-  if(['eraser','rainbow'].includes(mode)){mode='brush';updateMode();}
-  toolMenu.hidden=true;
+  setPicker(false);
  };
  app.querySelectorAll('.v2-color').forEach(b=>b.addEventListener('click',()=>changeColor(b)));
- const toolMenu=document.getElementById('studio-tool-menu'),moreMenu=document.getElementById('studio-more-menu');
- function showMenu(menu){const was=menu.hidden;toolMenu.hidden=true;moreMenu.hidden=true;if(was)menu.hidden=false;}
- const updateMode=()=>{document.getElementById('studio-brush').textContent=toolSymbols[mode];toolMenu.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('chosen',b.dataset.mode===mode));};
- updateMode();
- on('studio-brush','click',()=>showMenu(toolMenu));on('studio-more','click',()=>showMenu(moreMenu));
- toolMenu.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{mode=b.dataset.mode;updateMode();toolMenu.hidden=true;}));
- toolMenu.querySelectorAll('[data-width]').forEach(b=>b.addEventListener('click',()=>{size=Number(b.dataset.width);toolMenu.querySelectorAll('[data-width]').forEach(x=>x.classList.toggle('chosen',x===b));}));
- function step(from,to){if(!ready||!from.length||busy||pointer!==null)return; const shot=from.pop();to.push(serialize());if(to.length>15)to.shift();ready=false;restoreImage(shot,()=>{ink=true;ready=true;scheduleSave();});}
- on('studio-undo','click',()=>step(undo,redo));on('studio-redo','click',()=>step(redo,undo));
- on('studio-back','click',()=>route('home'));on('studio-gallery','click',()=>route('gallery'));
- on('studio-paper','click',()=>{paper=paper==='#FFFFFF'?'#FFF4DE':paper==='#FFF4DE'?'#E8F4FD':'#FFFFFF';store.set('v2-paper',paper);moreMenu.hidden=true;toast('Papierfarbe für neue Blätter ausgewählt');});
- on('studio-share','click',async()=>{if(!ready||busy||!ink)return toast('Male zuerst etwas Schönes.');try{await saveDraft(true);await saveToGallery(serialize(),'Mein Kunstwerk');moreMenu.hidden=true;}catch{toast('Speichern fehlgeschlagen');}});
- on('studio-help','click',()=>{moreMenu.hidden=true;toast('Male mit dem Finger. Neues Blatt speichert dein Bild!');});
- const nextButton=document.getElementById('studio-new');
- on('studio-new','click',async()=>{
-  if(!ready||busy||pointer!==null)return;busy=true;nextButton.disabled=true;setStatus('Sichere dein Bild …');
-  clearTimeout(saveTimer);saveTimer=null;toolMenu.hidden=true;moreMenu.hidden=true;
+ const picker=document.getElementById('motif-options');
+ function setPicker(open){
+  picker.hidden=!open;
+  document.getElementById('studio-motifs').setAttribute('aria-expanded',String(open));
+ }
+ on('studio-parent','click',()=>{if(!busy)openParentGate();});
+ on('studio-motifs','click',()=>{if(ready&&!busy)setPicker(picker.hidden);});
+ on('studio-new','click',()=>nextSheet());
+ picker.querySelectorAll('[data-sheet]').forEach(button=>button.addEventListener('click',()=>nextSheet(button.dataset.sheet)));
+ async function nextSheet(motif){
+  if(!ready||busy||pointer!==null)return;
+  busy=true;setPicker(false);setStatus('Sichere dein Bild …');
+  clearTimeout(saveTimer);saveTimer=null;
   try{
    await draftWriteQueue;
    const old=ink?serialize():null;
-   const tmp=document.createElement('canvas');tmp.width=canvas.width;tmp.height=canvas.height;const t=tmp.getContext('2d');t.fillStyle=paper;t.fillRect(0,0,tmp.width,tmp.height);const blank=tmp.toDataURL('image/png');
+   const tmp=document.createElement('canvas');tmp.width=canvas.width;tmp.height=canvas.height;const t=tmp.getContext('2d');t.fillStyle=paper;t.fillRect(0,0,tmp.width,tmp.height);if(motif){
+    const image=new Image();
+    const svg=templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff');
+    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);});
+    const scale=Math.min(tmp.width/720,tmp.height*.72/480);
+    t.drawImage(image,(tmp.width-720*scale)/2,(tmp.height-480*scale)/2,720*scale,480*scale);
+   }
+   const blank=tmp.toDataURL('image/png');
    const database=await db();const picId='img-'+Date.now()+'-'+Math.floor(Math.random()*100000);const galleryPicture=old?{id:picId,type:'gallery',label:'Mein Bild',data:old,profile,created:Date.now()}:null;
    await new Promise((resolve,reject)=>{const tx=database.transaction('pictures','readwrite'),os=tx.objectStore('pictures');if(galleryPicture)os.put(galleryPicture);os.put({id:draftId,type:'draft',data:blank,profile,created:Date.now(),hasInk:false});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Speicherfehler'));tx.onabort=()=>reject(tx.error||new Error('Speicher abgebrochen'));});
-   fillPaper();undo.length=0;redo.length=0;ink=false;dirty=false;rev++;setStatus(old?'✓ Bild gesichert':'✓ Neues Blatt');beep();
+   fillPaper();ctx.drawImage(tmp,0,0,W,H);ink=false;dirty=false;rev++;setStatus(old?'✓ Bild gesichert':'✓ Neues Blatt');beep();
   }catch(e){setStatus('⚠ Bitte erneut versuchen');toast('Das Bild konnte nicht gespeichert werden.');}
-  finally{busy=false;nextButton.disabled=false;}
- });
+  finally{busy=false;}
+ }
  draftWriteQueue.then(()=>getPic(draftId)).then(saved=>{if(saved?.data){restoreImage(saved.data,()=>{ink=saved.hasInk===undefined?true:!!saved.hasInk;ready=true;setStatus('✓ Bereit');});}else{ready=true;setStatus('✓ Bereit');}}).catch(()=>{ready=true;setStatus('⚠ Lokaler Speicher prüfen');});
  const onHide=()=>{if(document.visibilityState==='hidden')saveDraft();};const onPage=()=>saveDraft();document.addEventListener('visibilitychange',onHide);window.addEventListener('pagehide',onPage);
  cleanup.push(()=>{document.body.classList.remove('studio-active');clearTimeout(saveTimer);watcher?.disconnect();document.removeEventListener('visibilitychange',onHide);window.removeEventListener('pagehide',onPage);if(dirty&&!busy)saveDraft();});
@@ -163,8 +187,9 @@ function v2Parents(){
  const profiles=store.get('v2-profiles',[{id:'main',name:settings.childName||'Kind 1'}]);if(!Array.isArray(profiles)||!profiles.length)return;
  const active=v2Profile();
  const box=document.createElement('section');box.className='v2-profile-panel';
- box.innerHTML=`<h2>Kinderprofile</h2><p>Jedes Kind erhält eigene Malblätter und eine eigene Bildergalerie. Bestehende Bilder gehören zum ersten Profil.</p><div class="v2-profile-row"><select id="v2-profile-select" aria-label="Aktives Kinderprofil">${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===active?'selected':''}>${esc(p.name)}</option>`).join('')}</select><input id="v2-profile-name" maxlength="24" placeholder="Neuer Kindername" aria-label="Neuer Kindername"/><button id="v2-add-profile" type="button">Profil hinzufügen</button></div><p class="v2-profile-note">Für jedes Profil kannst du die anderen Familieneinstellungen getrennt anpassen, indem du das Profil auswählst.</p>`;
+ box.innerHTML=`<div class="parent-links"><button id="mini-resume" class="tool-btn">🖍️ Zum Malblatt</button><button id="mini-activities" class="tool-btn">Spielauswahl öffnen</button></div><h2>Kinderprofile</h2><p>Jedes Kind erhält eigene Malblätter und eine eigene Bildergalerie. Bestehende Bilder gehören zum ersten Profil.</p><div class="v2-profile-row"><select id="v2-profile-select" aria-label="Aktives Kinderprofil">${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===active?'selected':''}>${esc(p.name)}</option>`).join('')}</select><input id="v2-profile-name" maxlength="24" placeholder="Neuer Kindername" aria-label="Neuer Kindername"/><button id="v2-add-profile" type="button">Profil hinzufügen</button></div><p class="v2-profile-note">Für jedes Profil kannst du die anderen Familieneinstellungen getrennt anpassen, indem du das Profil auswählst.</p>`;
  panel.insertBefore(box,panel.firstChild);
+ on('mini-resume','click',()=>route('draw'));on('mini-activities','click',()=>route('home'));
  box.querySelector('#v2-profile-select').addEventListener('change',e=>{const selected=profiles.find(p=>p.id===e.target.value);if(!selected)return;store.set('v2-active-profile',selected.id);const prefs=store.get('v2-profile-settings-'+selected.id,{});settings=Object.assign(settings,prefs,{childName:selected.name});store.set('settings',settings);route('parents');});
  box.querySelector('#v2-add-profile').addEventListener('click',()=>{const name=box.querySelector('#v2-profile-name').value.trim();if(!name)return toast('Bitte einen Namen eingeben.');if(profiles.length>=6)return toast('Maximal sechs Profile.');const id='kid-'+Date.now();profiles.push({id,name:name.slice(0,24)});store.set('v2-profiles',profiles);store.set('v2-active-profile',id);store.set('v2-profile-settings-'+id,{childName:name.slice(0,24),ageBand:'2'});settings.childName=name.slice(0,24);settings.ageBand='2';store.set('settings',settings);route('parents');});
  for(const id of ['setting-name','setting-age','setting-theme','setting-sound','setting-quiet','setting-easy','setting-fullscreen']){
