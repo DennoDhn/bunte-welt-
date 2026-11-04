@@ -81,8 +81,8 @@ function v2Draw(){
  document.body.classList.add('studio-active');
  const profile=v2Profile(),draftId=v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
- const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830'],['Weiß','#FFFFFF']];
- const characters=[['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy']];
+ const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830']];
+ const characters=[['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy'],['whale','Wal'],['tractor','Traktor'],['castle','Sandburg']];
  const brushes=[
   {id:'pencil',name:'Stift',symbol:'✏️',width:8},
   {id:'crayon',name:'Wachsmaler',symbol:'🖍️',width:22},
@@ -92,6 +92,7 @@ function v2Draw(){
  let brush=brushes.find(item=>item.id===savedBrush)||brushes[1];
  const savedColor=store.get('v2-color',chips[0][1]);
  let color=[...chips,...extraColors].some(([,hex])=>hex===savedColor)?savedColor:chips[0][1];
+ let erasing=false;
  let ink=false,ready=false,busy=false,pointer=null,previous=null,dirty=false,rev=0,queue=Promise.resolve(),saveTimer=null;
  function swatch([name,hex]){
   return `<button class="v2-color ${hex===color?'selected':''}" style="--swatch:${hex}" data-c="${hex}" aria-label="${name}" aria-pressed="${hex===color}"></button>`;
@@ -115,14 +116,14 @@ function v2Draw(){
    <button id="studio-colors" aria-label="Weitere Farben" aria-controls="extra-colors" aria-expanded="false">🎨</button>
    <button id="studio-motifs" aria-label="Ausmalmotiv wählen" aria-expanded="false">🐠</button>
   </div>
-  <div class="mini-motifs mini-extra" id="extra-colors" role="group" aria-label="Weitere Malfarben" hidden>${extraColors.map(swatch).join('')}</div>
+  <div class="mini-motifs mini-extra" id="extra-colors" role="group" aria-label="Weitere Malfarben" hidden>${extraColors.map(swatch).join('')}<button id="studio-eraser" aria-label="Radierer" aria-pressed="false">🧽</button></div>
   <div class="mini-motifs" id="motif-options" role="group" aria-label="Ausmalmotive" hidden>
    ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="motifs/${id}.svg" alt=""><small>${name}</small></button>`).join('')}
-   ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus'],['butterfly','🦋','Schmetterling'],['car','🚗','Auto'],['balloons','🎈','Luftballons'],['sun','☀️','Sonne'],['tree','🌳','Baum'],['cat','🐱','Katze'],['rocket','🚀','Rakete']].map(([id,symbol,name])=>`<button data-sheet="${id}" aria-label="${name}">${symbol}</button>`).join('')}
+   ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus'],['butterfly','🦋','Schmetterling'],['car','🚗','Auto'],['balloons','🎈','Luftballons'],['sun','☀️','Sonne'],['tree','🌳','Baum'],['cat','🐱','Katze'],['rocket','🚀','Rakete']].map(([id,symbol,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img alt="" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(templateSvg(id,{}))}"><small>${name}</small></button>`).join('')}
   </div>
  </section>`;
  const canvas=document.getElementById('studio-canvas'),stage=document.getElementById('studio-surface');
- const ctx=canvas.getContext('2d',{alpha:false}),dpr=Math.min(2,window.devicePixelRatio||1);
+ const ctx=canvas.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1);
  const overlay=document.getElementById('studio-outline');
  let outline=null;
  function fitImage(target,image){
@@ -146,10 +147,11 @@ function v2Draw(){
  const indicator=document.getElementById('studio-save-state');
  const setStatus=msg=>{if(indicator)indicator.textContent=msg;};
  function serialize(){
-  if(!outline)return canvas.toDataURL();
+
   const result=canvas.cloneNode();
   const context=result.getContext('2d');
-  context.drawImage(canvas,0,0);context.drawImage(overlay,0,0);
+  context.fillStyle=paper;context.fillRect(0,0,result.width,result.height);
+  context.drawImage(canvas,0,0);if(outline)context.drawImage(overlay,0,0);
   return result.toDataURL();
  }
  function saveDraft(force=false){if(!ready||busy||(!dirty&&!force))return queue;const revision=rev,data=serialize();setStatus('Speichert …');clearTimeout(saveTimer);saveTimer=null;
@@ -167,23 +169,28 @@ function v2Draw(){
   if(extras.hidden)setPicker(false);
   pointer=e.pointerId;
   previous=xy(e);
+  ctx.save();
+  ctx.globalCompositeOperation=erasing?'destination-out':'source-over';
   ctx.fillStyle=color;
   ctx.beginPath();
-  ctx.arc(previous.x,previous.y,brush.width/2,0,Math.PI*2);
-  ctx.fill();
-  ink=true;
+  ctx.arc(previous.x,previous.y,(erasing?44:brush.width)/2,0,Math.PI*2);
+  ctx.fill();ctx.restore();
+  if(!erasing)ink=true;
   scheduleSave();
   canvas.setPointerCapture(pointer);
  });
  canvas.addEventListener('pointermove',e=>{
   if(pointer!==e.pointerId||busy)return;
   const p=xy(e);
-  ctx.lineCap='round';ctx.lineWidth=brush.width;ctx.strokeStyle=color;
-  ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(p.x,p.y);ctx.stroke();
+  ctx.save();ctx.globalCompositeOperation=erasing?'destination-out':'source-over';
+  ctx.lineCap='round';ctx.lineWidth=erasing?44:brush.width;ctx.strokeStyle=color;
+  ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.restore();
   previous=p;dirty=true;rev++;
  });
  const finish=e=>{if(e.pointerId!==pointer)return;pointer=null;scheduleSave();};for(const ev of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(ev,finish);
  const changeColor=button=>{
+  erasing=false;
+  syncTool();
   color=button.dataset.c;
   store.set('v2-color',color);
   updatePalette();
@@ -208,12 +215,21 @@ function v2Draw(){
  on('studio-colors','click',()=>setPicker(extras.hidden?'colors':false));
  const brushToggle=document.getElementById('brush-toggle');
  const brushOptions=document.getElementById('brush-options');
+ function syncTool(){
+  brushToggle.textContent=erasing?'🧽':brush.symbol;
+  brushToggle.setAttribute('aria-label',erasing?'Malwerkzeug: Radierer':'Malwerkzeug: '+brush.name);
+  document.getElementById('studio-eraser').setAttribute('aria-pressed',String(erasing));
+ }
+ on('studio-eraser','click',()=>{
+  erasing=true;syncTool();
+  app.querySelectorAll('.v2-color').forEach(b=>{b.classList.remove('selected');b.setAttribute('aria-pressed','false');});
+  setPicker(false);
+ });
  brushToggle.addEventListener('click',()=>setPicker(brushOptions.hidden?'brushes':false));
  brushOptions.querySelectorAll('[data-brush]').forEach(button=>button.addEventListener('click',()=>{
   brush=brushes.find(item=>item.id===button.dataset.brush);
   store.set('studio-brush-'+profile,brush.id);
-  brushToggle.textContent=brush.symbol;
-  brushToggle.setAttribute('aria-label','Malwerkzeug: '+brush.name);
+  changeColor(app.querySelector(`[data-c="${color}"]`));
   brushOptions.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
   setPicker(false);
  }));
@@ -250,9 +266,11 @@ function v2Draw(){
     lines=tmp.cloneNode();
     const raster=t.getImageData(0,0,tmp.width,tmp.height);
     for(let i=0;i<raster.data.length;i+=4){
-     if(raster.data[i]>180&&raster.data[i+1]>180&&raster.data[i+2]>180)raster.data[i+3]=0;
+     if(Math.min(raster.data[i],raster.data[i+1],raster.data[i+2])>180)raster.data[i+3]=0;
     }
     lines.getContext('2d').putImageData(raster,0,0);
+    t.fillStyle=paper;t.fillRect(0,0,tmp.width,tmp.height);
+    t.drawImage(lines,0,0);
    }
    const newOutline=lines?lines.toDataURL():null;
    const blank=tmp.toDataURL('image/png');

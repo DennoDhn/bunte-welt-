@@ -6,7 +6,13 @@ const soundPads=[
  {id:'bubbles',name:'Seifenblasen',icon:'🫧',echo:'○',color:'#ccefeb'},
  {id:'drum',name:'Trommel',icon:'🥁',echo:'♫',color:'#ffe4cd'},
  {id:'rain',name:'Regen',icon:'🌧️',echo:'💧',color:'#d7eaf8'},
- {id:'bell',name:'Glocke',icon:'🔔',echo:'✧',color:'#fff1b9'}
+ {id:'bell',name:'Glocke',icon:'🔔',echo:'✧',color:'#fff1b9'},
+ {id:'frog',name:'Frosch',icon:'🐸',echo:'♪',color:'#deedc5'},
+ {id:'sea',name:'Meer',icon:'🌊',echo:'≈',color:'#d3f1ed'},
+ {id:'owl',name:'Eule',icon:'🦉',echo:'☾',color:'#ebe3fb'},
+ {id:'horn',name:'Hupe',icon:'🚗',echo:'♫',color:'#ffe2d4'},
+ {id:'xylophone',name:'Xylophon',icon:'🎶',echo:'♪',color:'#ffeec4'},
+ {id:'bee',name:'Biene',icon:'🐝',echo:'✿',color:'#f5efbc'}
 ];
 
 // Short, locally generated sound effects. All voices share one output level.
@@ -48,6 +54,33 @@ function makePadSound(context,id){
     value=(0.37*white+1.2*noise)*(0.65+0.15*wave(1.3*t));
     break;
    }
+   case 'frog':{
+    const u=t%0.5;
+    if(u<0.27)value=(wave(137*u)+0.45*wave(274*u))*Math.sin(Math.PI*u/0.27)**2*(0.6+0.4*wave(31*u));
+    break;
+   }
+   case 'sea':
+    noise=0.93*noise+0.07*(2*Math.random()-1);
+    value=3*noise*Math.sin(Math.PI*t/duration)**2;
+    break;
+   case 'owl':{
+    const u=t%0.65;
+    if(u<0.42)value=wave(395*u-92*u*u)*Math.sin(Math.PI*u/0.42)**2;
+    break;
+   }
+   case 'horn':{
+    const u=t%0.48;
+    if(t<0.96&&u<0.29)value=(0.6*wave(349*u)+0.4*wave(440*u)+0.13*wave(698*u))*Math.min(1,u*35,(0.29-u)*25);
+    break;
+   }
+   case 'xylophone':{
+    const n=Math.min(3,Math.floor(t/0.3)),u=t-n*0.3,f=[523,659,784,1046][n];
+    value=(wave(f*u)+0.24*wave(f*3.9*u))*Math.exp(-11*u);
+    break;
+   }
+   case 'bee':
+    value=(wave(178*t+0.4*wave(4*t))+0.3*wave(356*t+0.8*wave(4*t)))*(0.5+0.25*wave(t));
+    break;
    case 'bell':
     value=Math.exp(-2.8*t)*(wave(740*t)+0.38*wave(1501*t)+0.2*wave(1991*t));
     break;
@@ -60,8 +93,8 @@ function makePadSound(context,id){
 
 function soundboard(){
  const clips=new Map();
- let current=null,sequence=0;
- app.innerHTML=`<main class="sound-room"><header><button id="sound-back">🖍️ Zum Malen</button><h1>Klangwelt</h1></header><div class="sound-pads">${soundPads.map(p=>`<button data-pad="${p.id}" aria-label="${p.name}" style="--pad:${p.color}"><span class="pad-icon" aria-hidden="true">${p.icon}</span><span class="pad-echo" aria-hidden="true">${p.echo}</span><span>${p.name}</span></button>`).join('')}</div></main>`;
+ let current=null,sequence=0,page=0;
+ app.innerHTML=`<main class="sound-room"><header><button id="sound-back">🖍️ Zum Malen</button><h1>Klangwelt</h1><button id="sound-next" aria-label="Weitere Klänge">➜</button></header><div class="sound-pads">${soundPads.map((p,i)=>`<button ${i>=6?'hidden':''} data-pad="${p.id}" aria-label="${p.name}" style="--pad:${p.color}"><span class="pad-icon" aria-hidden="true">${p.icon}</span><span class="pad-echo" aria-hidden="true">${p.echo}</span><span>${p.name}</span></button>`).join('')}</div></main>`;
  function silence(){
   sequence++;
   if(current){current.stop();current.disconnect();current=null;}
@@ -84,6 +117,13 @@ function soundboard(){
  const hide=()=>{if(document.hidden)silence();};
  document.addEventListener('visibilitychange',hide);
  cleanup.push(()=>{silence();document.removeEventListener('visibilitychange',hide);});
+ on('sound-next','click',()=>{
+  silence();page=1-page;
+  const next=document.getElementById('sound-next');
+  next.textContent=page?'⬅':'➜';
+  next.setAttribute('aria-label',page?'Erste Klänge':'Weitere Klänge');
+  app.querySelectorAll('[data-pad]').forEach((b,i)=>{b.hidden=Math.floor(i/6)!==page;b.classList.remove('pad-playing');});
+ });
  on('sound-back','click',()=>route('draw'));
  app.querySelectorAll('[data-pad]').forEach(button=>button.addEventListener('click',()=>{
   app.querySelector('.pad-playing')?.classList.remove('pad-playing');

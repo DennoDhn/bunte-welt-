@@ -134,3 +134,17 @@ body.studio-active #app{position:fixed;padding:0}
 @keyframes pad-echo{25%{opacity:.8}to{opacity:0;transform:translate(9px,-21px)}}
 @media(max-width:580px) and (orientation:portrait){.sound-pads{grid-template-columns:repeat(2,1fr)}.sound-pads button{min-height:clamp(100px,22dvh,150px)}}
 @media(prefers-reduced-motion:reduce){.pad-playing .pad-icon,.pad-playing .pad-echo{animation:none}.pad-playing{outline:3px solid #67737c;outline-offset:-3px}}
+#studio-canvas{background:white}
+#studio-eraser{background:#fff0d9;font-size:26px}
+#studio-eraser[aria-pressed=true]{outline:3px solid #526b73}
+#sound-next{margin-left:auto;min-width:52px;min-height:52px;border-radius:18px;background:#ede8fb;color:#484268;font-size:25px}
+.sound-pads button[hidden]{display:none}
+#motif-options .character-sheet small{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+@media(prefers-reduced-motion:no-preference){
+ [data-pad=bee].pad-playing .pad-icon,[data-pad=bird].pad-playing .pad-icon{animation:pad-fly .75s ease-in-out}
+ [data-pad=sea].pad-playing .pad-icon,[data-pad=train].pad-playing .pad-icon{animation:pad-travel .8s ease-in-out}
+ [data-pad=bell].pad-playing .pad-icon{animation:pad-ring .65s ease-in-out}
+}
+@keyframes pad-fly{35%{transform:translate(-8%,-10%) rotate(-8deg)}70%{transform:translate(10%,-16%) rotate(7deg)}}
+@keyframes pad-travel{50%{transform:translateX(14%) rotate(-3deg)}}
+@keyframes pad-ring{25%,65%{transform:rotate(13deg)}45%,80%{transform:rotate(-10deg)}}
