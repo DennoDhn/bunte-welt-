@@ -1,7 +1,7 @@
-/* Meine bunte Welt – Offline-Shell v2.8.0 */
-const CACHE = 'bunte-welt-v2.8.0';
+/* Meine bunte Welt – Offline-Shell v2.9.0 */
+const CACHE = 'bunte-welt-v2.9.0';
 const ASSETS = [
-  './', './index.html', './style.css?v=2.8.0', './v2.css?v=2.8.0', './extra.js?v=2.8.0', './v2.js?v=2.8.0', './soundboard.js?v=2.8.0', './app.js?v=2.8.0',
+  './', './index.html', './style.css?v=2.9.0', './v2.css?v=2.9.0', './extra.js?v=2.9.0', './v2.js?v=2.9.0', './soundboard.js?v=2.9.0', './app.js?v=2.9.0',
   './motifs/whale.svg', './motifs/tractor.svg', './motifs/castle.svg', './motifs/chase.svg', './motifs/marshall.svg', './motifs/skye.svg', './motifs/peppa.svg', './motifs/miffy.svg',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'
 ];

@@ -148,3 +148,11 @@ body.studio-active #app{position:fixed;padding:0}
 @keyframes pad-fly{35%{transform:translate(-8%,-10%) rotate(-8deg)}70%{transform:translate(10%,-16%) rotate(7deg)}}
 @keyframes pad-travel{50%{transform:translateX(14%) rotate(-3deg)}}
 @keyframes pad-ring{25%,65%{transform:rotate(13deg)}45%,80%{transform:rotate(-10deg)}}
+.sound-pads[hidden],#bubble-play[hidden],#sound-next[hidden]{display:none}
+.bubble-sky{position:relative;overflow:hidden;height:clamp(180px,50dvh,440px);border-radius:26px;background:linear-gradient(#dff1fc,#f5fbff 68%,#dcf2e4)}
+.play-bubble{position:absolute;translate:-50% -50%;transform:none;width:clamp(55px,8vw,83px);aspect-ratio:1;border:0;background:transparent;padding:0}.play-bubble::before{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid hsl(var(--hue) 48% 63%);background:radial-gradient(circle at 32% 25%,white 5%,transparent 13%),radial-gradient(circle at 60% 60%,#ffffff4d,hsl(var(--hue) 80% 81%) 74%,white);animation:bubble-arrive .65s ease-out}
+.bubble-actions{display:flex;justify-content:center;gap:14px;padding:12px}
+.bubble-actions button{min-height:54px;border-radius:19px;background:#e9e5fc;padding:8px 18px;font-weight:800}
+#bubble-more{background:#cbeeea;font-size:25px}
+@keyframes bubble-arrive{from{transform:translateY(45%) scale(.65)}}
+@media(prefers-reduced-motion:reduce){.play-bubble::before{animation:none}}

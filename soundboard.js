@@ -17,7 +17,7 @@ const soundPads=[
 
 // Short, locally generated sound effects. All voices share one output level.
 function makePadSound(context,id){
- const rate=22050,duration=1.5;
+ const rate=22050,duration=id==='drum'?0.34:id==='pop'?0.12:1.5;
  const buffer=context.createBuffer(1,Math.ceil(rate*duration),rate);
  const samples=buffer.getChannelData(0);
  let noise=0;
@@ -44,10 +44,12 @@ function makePadSound(context,id){
     break;
    }
    case 'drum':{
-    const u=t%0.34;
-    if(t<1.02)value=Math.exp(-17*u)*(wave(92*u+1.8*(1-Math.exp(-30*u)))+0.18*wave(175*u));
+    value=Math.exp(-17*t)*(wave(92*t+1.8*(1-Math.exp(-30*t)))+0.18*wave(175*t));
     break;
    }
+   case 'pop':
+    value=Math.exp(-35*t)*wave(1050*t-3600*t*t);
+    break;
    case 'rain':{
     const white=2*Math.random()-1;
     noise=0.82*noise+0.18*white;
@@ -94,7 +96,7 @@ function makePadSound(context,id){
 function soundboard(){
  const clips=new Map();
  let current=null,sequence=0,page=0;
- app.innerHTML=`<main class="sound-room"><header><button id="sound-back">🖍️ Zum Malen</button><h1>Klangwelt</h1><button id="sound-next" aria-label="Weitere Klänge">➜</button></header><div class="sound-pads">${soundPads.map((p,i)=>`<button ${i>=6?'hidden':''} data-pad="${p.id}" aria-label="${p.name}" style="--pad:${p.color}"><span class="pad-icon" aria-hidden="true">${p.icon}</span><span class="pad-echo" aria-hidden="true">${p.echo}</span><span>${p.name}</span></button>`).join('')}</div></main>`;
+ app.innerHTML=`<main class="sound-room"><header><button id="sound-back">🖍️ Zum Malen</button><h1>Klangwelt</h1><button id="sound-next" aria-label="Weitere Klänge">➜</button></header><div class="sound-pads">${soundPads.map((p,i)=>`<button ${i>=6?'hidden':''} data-pad="${p.id}" aria-label="${p.name}" style="--pad:${p.color}"><span class="pad-icon" aria-hidden="true">${p.icon}</span><span class="pad-echo" aria-hidden="true">${p.echo}</span><span>${p.name}</span></button>`).join('')}</div><section id="bubble-play" hidden><div class="bubble-sky" aria-label="Seifenblasen"></div><div class="bubble-actions"><button id="bubble-more" aria-label="Neue Seifenblase">🫧 ＋</button><button id="bubble-back">🎵 Klänge</button></div></section></main>`;
  function silence(){
   sequence++;
   if(current){current.stop();current.disconnect();current=null;}
@@ -117,6 +119,30 @@ function soundboard(){
  const hide=()=>{if(document.hidden)silence();};
  document.addEventListener('visibilitychange',hide);
  cleanup.push(()=>{silence();document.removeEventListener('visibilitychange',hide);});
+ const field=app.querySelector('.bubble-sky'),bubblePlay=document.getElementById('bubble-play');
+ const pads=app.querySelector('.sound-pads'),nextPage=document.getElementById('sound-next');
+ const places=[[18,68],[50,28],[80,65],[18,25],[50,75],[80,23]];
+ let serial=0;
+ function addBubble(){
+  const slot=serial%places.length;
+  field.querySelector(`[data-slot="${slot}"]`)?.remove();
+  const bubble=document.createElement('button');
+  const [x,y]=places[slot];
+  bubble.className='play-bubble';bubble.dataset.slot=slot;
+  bubble.setAttribute('aria-label','Seifenblase platzen lassen');
+  bubble.style.left=x+'%';bubble.style.top=y+'%';
+  bubble.style.setProperty('--hue',String((serial++*67+183)%360));
+  bubble.addEventListener('click',()=>{bubble.remove();play('pop');});
+  field.append(bubble);
+ }
+ function bubbles(open){
+  silence();
+  pads.hidden=open;nextPage.hidden=open;bubblePlay.hidden=!open;
+  if(open){addBubble();document.getElementById('bubble-more').focus();}
+  else{field.replaceChildren();pads.querySelector('[data-pad=bubbles]').focus();}
+ }
+ on('bubble-more','click',addBubble);
+ on('bubble-back','click',()=>bubbles(false));
  on('sound-next','click',()=>{
   silence();page=1-page;
   const next=document.getElementById('sound-next');
@@ -129,6 +155,7 @@ function soundboard(){
   app.querySelector('.pad-playing')?.classList.remove('pad-playing');
   void button.offsetWidth;
   button.classList.add('pad-playing');
-  play(button.dataset.pad);
+  if(button.dataset.pad==='bubbles')bubbles(true);
+  else play(button.dataset.pad);
  }));
 }

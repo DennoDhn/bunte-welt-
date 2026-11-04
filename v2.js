@@ -77,6 +77,48 @@ function v2Gallery(){
   }));
  }).catch(()=>{let el=document.getElementById('v2-gallery-grid');if(el)el.textContent='Galerie nicht verfügbar. Speicher prüfen.';});
 }
+// Label connected paper regions from the protected outline, independently of paint.
+function regionPicker(overlay,width,height){
+ const mask=document.createElement('canvas');
+ mask.width=Math.ceil(width);mask.height=Math.ceil(height);
+ const w=mask.width,h=mask.height;
+ const context=mask.getContext('2d');
+ context.drawImage(overlay,0,0,w,h);
+ const pixels=context.getImageData(0,0,w,h).data;
+ const labels=new Int32Array(w*h);
+ for(let n=0;n<labels.length;n++)if(pixels[4*n+3]>40)labels[n]=-1;
+ const paths=[null];
+ return point=>{
+  const x=Math.floor(point.x),y=Math.floor(point.y);
+  if(x<0||y<0||x>=w||y>=h)return null;
+  const start=y*w+x;
+  if(labels[start]===-1)return null;
+  if(labels[start])return paths[labels[start]];
+  const id=paths.length,path=new Path2D(),pending=[start];
+  paths.push(path);
+  while(pending.length){
+   const seed=pending.pop();
+   if(labels[seed])continue;
+   const row=Math.floor(seed/w),first=row*w,last=first+w-1;
+   let left=seed,right=seed;
+   while(left>first&&!labels[left-1])left--;
+   while(right<last&&!labels[right+1])right++;
+   labels.fill(id,left,right+1);
+   path.rect(left-first,row,right-left+1,1);
+   for(const adjacent of [row-1,row+1]){
+    if(adjacent<0||adjacent>=h)continue;
+    const offset=(adjacent-row)*w;
+    let inRun=false;
+    for(let col=left;col<=right;col++){
+     const open=labels[col+offset]===0;
+     if(open&&!inRun)pending.push(col+offset);
+     inRun=open;
+    }
+   }
+  }
+  return path;
+ };
+}
 function v2Draw(){
  document.body.classList.add('studio-active');
  const profile=v2Profile(),draftId=v2DraftId();
@@ -125,7 +167,7 @@ function v2Draw(){
  const canvas=document.getElementById('studio-canvas'),stage=document.getElementById('studio-surface');
  const ctx=canvas.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1);
  const overlay=document.getElementById('studio-outline');
- let outline=null;
+ let outline=null,regionSource=null,pickRegion=null,strokeRegion=null;
  function fitImage(target,image){
   const scale=Math.min(target.width/image.width,target.height/image.height);
   const w=image.width*scale,h=image.height*scale;
@@ -140,6 +182,7 @@ function v2Draw(){
  let W=0,H=0,paper='#FFFFFF';
  function fillPaper(){ctx.save();ctx.fillStyle=paper;ctx.fillRect(0,0,W,H);ctx.restore();}
  function resize(){const r=stage.getBoundingClientRect();if(r.width<40||r.height<40||(W===r.width&&H===r.height))return;
+  pointer=null;strokeRegion=null;
   const prev=W&&H?document.createElement('canvas'):null;if(prev){prev.width=canvas.width;prev.height=canvas.height;prev.getContext('2d').drawImage(canvas,0,0);}
   W=r.width;H=r.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);resizeOutline();fillPaper();if(prev){const ratio=Math.min(W/(prev.width/dpr),H/(prev.height/dpr)),nw=prev.width/dpr*ratio,nh=prev.height/dpr*ratio;ctx.drawImage(prev,0,0,prev.width,prev.height,(W-nw)/2,(H-nh)/2,nw,nh);}
  }
@@ -167,9 +210,16 @@ function v2Draw(){
   if(!ready||busy||pointer!==null||e.button!==0)return;
   e.preventDefault();
   if(extras.hidden)setPicker(false);
-  pointer=e.pointerId;
   previous=xy(e);
+  strokeRegion=null;
+  if(outline){
+   if(regionSource!==outline){pickRegion=regionPicker(overlay,W,H);regionSource=outline;}
+   strokeRegion=pickRegion(previous);
+   if(!strokeRegion)return;
+  }
+  pointer=e.pointerId;
   ctx.save();
+  if(strokeRegion)ctx.clip(strokeRegion);
   ctx.globalCompositeOperation=erasing?'destination-out':'source-over';
   ctx.fillStyle=color;
   ctx.beginPath();
@@ -182,7 +232,8 @@ function v2Draw(){
  canvas.addEventListener('pointermove',e=>{
   if(pointer!==e.pointerId||busy)return;
   const p=xy(e);
-  ctx.save();ctx.globalCompositeOperation=erasing?'destination-out':'source-over';
+  ctx.save();if(strokeRegion)ctx.clip(strokeRegion);
+  ctx.globalCompositeOperation=erasing?'destination-out':'source-over';
   ctx.lineCap='round';ctx.lineWidth=erasing?44:brush.width;ctx.strokeStyle=color;
   ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.restore();
   previous=p;dirty=true;rev++;
