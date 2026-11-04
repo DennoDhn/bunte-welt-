@@ -82,6 +82,7 @@ function v2Draw(){
  const profile=v2Profile(),draftId=v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
  const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830'],['Weiß','#FFFFFF']];
+ const characters=[['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy']];
  const brushes=[
   {id:'pencil',name:'Stift',symbol:'✏️',width:8},
   {id:'crayon',name:'Wachsmaler',symbol:'🖍️',width:22},
@@ -115,6 +116,7 @@ function v2Draw(){
   </div>
   <div class="mini-motifs mini-extra" id="extra-colors" role="group" aria-label="Weitere Malfarben" hidden>${extraColors.map(swatch).join('')}</div>
   <div class="mini-motifs" id="motif-options" role="group" aria-label="Ausmalmotive" hidden>
+   ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="motifs/${id}.svg" alt=""><small>${name}</small></button>`).join('')}
    ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus'],['butterfly','🦋','Schmetterling'],['car','🚗','Auto'],['balloons','🎈','Luftballons'],['sun','☀️','Sonne'],['tree','🌳','Baum'],['cat','🐱','Katze'],['rocket','🚀','Rakete']].map(([id,symbol,name])=>`<button data-sheet="${id}" aria-label="${name}">${symbol}</button>`).join('')}
   </div>
  </section>`;
@@ -237,8 +239,9 @@ function v2Draw(){
    let lines=null;
    const tmp=document.createElement('canvas');tmp.width=canvas.width;tmp.height=canvas.height;const t=tmp.getContext('2d');t.fillStyle=paper;t.fillRect(0,0,tmp.width,tmp.height);if(motif){
     const image=new Image();
-    const svg=templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff');
-    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);});
+    const character=characters.some(([id])=>id===motif);
+    const source=character?'motifs/'+motif+'.svg':'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff'));
+    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=source;});
     const scale=Math.min(tmp.width/720,tmp.height*.72/480);
     t.drawImage(image,(tmp.width-720*scale)/2,(tmp.height-480*scale)/2,720*scale,480*scale);
     // Lift the printed lines from the untouched template, before the first finger stroke.

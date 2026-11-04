@@ -116,3 +116,6 @@ body.studio-active #app{position:fixed;padding:0}
 #studio-outline{pointer-events:none}
 #motif-options:not([hidden]){display:grid;grid-template-columns:repeat(5,auto);max-height:calc(100dvh - 185px);overflow-y:auto;overscroll-behavior:contain}
 @media(max-width:390px){#motif-options{gap:6px}}
+#motif-options .character-sheet{height:auto;min-height:66px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f8f4e8;border-radius:14px}
+.character-sheet img{display:block;width:100%;height:42px;object-fit:cover;transform:scale(1.1)}
+.character-sheet small{font-size:10px;font-weight:700;color:#384150}
