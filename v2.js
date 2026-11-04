@@ -82,6 +82,13 @@ function v2Draw(){
  const profile=v2Profile(),draftId=v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
  const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830'],['Weiß','#FFFFFF']];
+ const brushes=[
+  {id:'pencil',name:'Stift',symbol:'✏️',width:8},
+  {id:'crayon',name:'Wachsmaler',symbol:'🖍️',width:22},
+  {id:'brush',name:'Pinsel',symbol:'🖌️',width:40}
+ ];
+ const savedBrush=store.get('studio-brush-'+profile,'crayon');
+ let brush=brushes.find(item=>item.id===savedBrush)||brushes[1];
  const savedColor=store.get('v2-color',chips[0][1]);
  let color=[...chips,...extraColors].some(([,hex])=>hex===savedColor)?savedColor:chips[0][1];
  let ink=false,ready=false,busy=false,pointer=null,previous=null,dirty=false,rev=0,queue=Promise.resolve(),saveTimer=null;
@@ -92,6 +99,12 @@ function v2Draw(){
   <div class="v2-studio-surface" id="studio-surface"><canvas id="studio-canvas" aria-label="Malfläche. Male mit deinem Finger oder einem Stift."></canvas></div>
   <nav class="v2-studio-top" aria-label="Blatt wählen">
    <button id="studio-parent" aria-label="Elternbereich">${v2Icon('gear',18)}</button>
+   <div class="brush-anchor">
+    <button id="brush-toggle" aria-controls="brush-options" aria-expanded="false" aria-label="Malwerkzeug: ${brush.name}">${brush.symbol}</button>
+    <div id="brush-options" role="group" aria-label="Strichstärke wählen" hidden>
+     ${brushes.map(item=>`<button data-brush="${item.id}" aria-label="${item.name}" aria-pressed="${item===brush}"><span aria-hidden="true">${item.symbol}</span><i style="height:${item.width}px"></i></button>`).join('')}
+    </div>
+   </div>
    <button id="studio-new" class="v2-new-sheet" aria-label="Neues Blatt">${v2Icon('new',32)} Neues Blatt</button>
   </nav>
   <span class="sr-only" id="studio-save-state" role="status"></span>
@@ -125,7 +138,7 @@ function v2Draw(){
  function scheduleSave(){dirty=true;rev++;clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveDraft(),650);}
  function restoreImage(data,then){let image=new Image();image.onload=()=>{fillPaper();const scale=Math.min(W/image.width,H/image.height),w=image.width*scale,h=image.height*scale;ctx.drawImage(image,(W-w)/2,(H-h)/2,w,h);then?.();};image.onerror=()=>then?.();image.src=data;}
  function xy(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
- const radius=11;
+
  canvas.addEventListener('pointerdown',e=>{
   if(!ready||busy||pointer!==null||e.button!==0)return;
   e.preventDefault();
@@ -134,7 +147,7 @@ function v2Draw(){
   previous=xy(e);
   ctx.fillStyle=color;
   ctx.beginPath();
-  ctx.arc(previous.x,previous.y,radius,0,Math.PI*2);
+  ctx.arc(previous.x,previous.y,brush.width/2,0,Math.PI*2);
   ctx.fill();
   ink=true;
   scheduleSave();
@@ -143,7 +156,7 @@ function v2Draw(){
  canvas.addEventListener('pointermove',e=>{
   if(pointer!==e.pointerId||busy)return;
   const p=xy(e);
-  ctx.lineCap='round';ctx.lineWidth=radius*2;ctx.strokeStyle=color;
+  ctx.lineCap='round';ctx.lineWidth=brush.width;ctx.strokeStyle=color;
   ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(p.x,p.y);ctx.stroke();
   previous=p;dirty=true;rev++;
  });
@@ -171,7 +184,21 @@ function v2Draw(){
  }
  updatePalette();
  on('studio-colors','click',()=>setPicker(extras.hidden?'colors':false));
+ const brushToggle=document.getElementById('brush-toggle');
+ const brushOptions=document.getElementById('brush-options');
+ brushToggle.addEventListener('click',()=>setPicker(brushOptions.hidden?'brushes':false));
+ brushOptions.querySelectorAll('[data-brush]').forEach(button=>button.addEventListener('click',()=>{
+  brush=brushes.find(item=>item.id===button.dataset.brush);
+  store.set('studio-brush-'+profile,brush.id);
+  brushToggle.textContent=brush.symbol;
+  brushToggle.setAttribute('aria-label','Malwerkzeug: '+brush.name);
+  brushOptions.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+  setPicker(false);
+ }));
  function setPicker(open){
+  brushOptions.hidden=open!=='brushes';
+  brushToggle.setAttribute('aria-expanded',String(!brushOptions.hidden));
+  brushOptions.style.setProperty('--stroke-preview',color);
   extras.hidden=open!=='colors';
   paletteButton.setAttribute('aria-expanded',String(!extras.hidden));
   picker.hidden=open!=='motifs';
