@@ -1,7 +1,7 @@
-/* Meine bunte Welt – Offline-Shell v1.3.0 */
-const CACHE = 'bunte-welt-v2.3.0';
+/* Meine bunte Welt – Offline-Shell v2.3.1 */
+const CACHE = 'bunte-welt-v2.3.1';
 const ASSETS = [
-  './', './index.html', './style.css', './v2.css', './extra.js', './v2.js', './app.js',
+  './', './index.html', './style.css?v=2.3.1', './v2.css?v=2.3.1', './extra.js?v=2.3.1', './v2.js?v=2.3.1', './app.js?v=2.3.1',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'
 ];
 const scopeURL = new URL(self.registration.scope);
@@ -9,7 +9,7 @@ const coreURLs = new Set(ASSETS.map(path => new URL(path, scopeURL).href));
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE)
-    .then(cache => cache.addAll(ASSETS))
+    .then(cache => cache.addAll(ASSETS.map(path => new Request(new URL(path, scopeURL), {cache:'reload'}))))
     .then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
@@ -26,7 +26,7 @@ self.addEventListener('fetch', event => {
 
   // Navigation: Aktuelle Version online laden, gespeicherte Startseite offline öffnen.
   if (req.mode === 'navigate') {
-    event.respondWith(fetch(req).catch(async () =>
+    event.respondWith(fetch(req, {cache:'no-cache'}).catch(async () =>
       (await caches.match(new URL('./index.html', scopeURL).href)) || Response.error()
     ));
     return;

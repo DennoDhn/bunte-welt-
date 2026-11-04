@@ -59,12 +59,21 @@ function v2Gallery(){
   el.innerHTML=all.map((p,i)=>`<article class="v2-gallery-card"><button class="picture-open" data-open="${i}" aria-label="Bild ${all.length-i} zum Weitermalen öffnen"><img alt="" data-picture="${i}"/></button><div class="v2-gallery-meta"><span>Bild ${all.length-i}</span><button class="v2-reopen" data-open="${i}" aria-label="Bild zum Weitermalen öffnen">${v2Icon('brush',21)} Weiter malen</button></div></article>`).join('');
   all.forEach((p,i)=>{el.querySelector(`[data-picture="${i}"]`).src=p.data;});
   el.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',async()=>{
-   if(b.disabled)return;b.disabled=true;
+   if(el.dataset.opening)return;el.dataset.opening='yes';
    try{
     const selected=all[Number(b.dataset.open)];const id=v2DraftId();await draftWriteQueue.catch(()=>{});const saved=await getPic(id);
-    if(saved?.data&&saved.hasInk!==false){await putPic({id:'img-'+Date.now()+'-previous',type:'gallery',label:'Mein Bild',data:saved.data,profile,created:Date.now()});}
-    await putPic({id,type:'draft',label:'Mein Bild',data:selected.data,profile,hasInk:true,created:Date.now()});route('draw');
-   }catch{toast('Das Bild konnte nicht geöffnet werden.');b.disabled=false;}
+    const database=await db();
+    await new Promise((resolve,reject)=>{
+     const tx=database.transaction('pictures','readwrite');
+     const pictures=tx.objectStore('pictures');
+     if(saved?.data&&saved.hasInk!==false&&saved.data!==selected.data){
+      pictures.put({id:'img-'+Date.now()+'-previous',type:'gallery',label:'Mein Bild',data:saved.data,profile,created:Date.now()});
+     }
+     pictures.put({id,type:'draft',label:'Mein Bild',data:selected.data,profile,hasInk:true,created:Date.now()});
+     tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+    });
+    if(el.isConnected)route('draw');
+   }catch{toast('Das Bild konnte nicht geöffnet werden.');delete el.dataset.opening;}
   }));
  }).catch(()=>{let el=document.getElementById('v2-gallery-grid');if(el)el.textContent='Galerie nicht verfügbar. Speicher prüfen.';});
 }

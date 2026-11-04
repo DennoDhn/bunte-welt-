@@ -1,17 +1,11 @@
-# Meine bunte Welt – Version 2.0
+# Meine bunte Welt
 
-Werbefreie Offline-Kinder-App für das iPad, mit Fokus auf kindgerechtes Malen.
+Die iPad-App öffnet direkt ein weißes Malblatt oder den letzten lokalen Entwurf. Mit dem Finger malen, die Farbe wechseln und ein neues Blatt anfangen sind direkt erreichbar.
 
-## Die wichtigsten Neuerungen
-
-- Bildschirmfüllende Malfläche ohne herkömmliche Webseitenleisten
-- **Neues Blatt** speichert das bisherige Bild atomar in der Galerie und öffnet ein leeres Blatt mit nur einem Tipp
-- Schwebende Palette, Pinselarten, Radierer, Sterne, Rückgängig und Wiederholen
-- Visuell überarbeiteter Startbildschirm mit vier großen Spielzugängen
-- Neu: Bausteine, Farben sortieren, Aquarium, Suchspiel
-- Bis zu sechs lokale Kinderprofile mit separaten Malblättern und Galerien
-- Bisherige Aktivitäten aus 1.3 weiterhin nutzbar, auch offline
-- Eltern-PIN, lokal gespeicherte Bilder, JSON-Backup und Export bestehen weiter
+- Rot, Gelb, Grün und Blau liegen unten auf dem Blatt. Die Palette öffnet acht weitere Farben.
+- Der Fisch öffnet drei Vorlagen zum freien Ausmalen.
+- „Neues Blatt“ sichert eine bemalte Seite in der Galerie. Unbenutzte Blätter erzeugen keinen Galerieeintrag.
+- Das Zahnrad öffnet den PIN-geschützten Elternbereich mit Galerie, Kinderprofilen, Sicherung und Spielauswahl. Dort steht auch die geladene App-Version.
 
 ## Datenschutz und Offlinebetrieb
 
