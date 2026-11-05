@@ -1,7 +1,7 @@
-/* Meine bunte Welt – Offline-Shell v2.9.1 */
-const CACHE = 'bunte-welt-v2.9.1';
+/* Meine bunte Welt – Offline-Shell v2.10.0 */
+const CACHE = 'bunte-welt-v2.10.0';
 const ASSETS = [
-  './', './index.html', './style.css?v=2.9.1', './v2.css?v=2.9.1', './extra.js?v=2.9.1', './v2.js?v=2.9.1', './soundboard.js?v=2.9.1', './app.js?v=2.9.1',
+  './', './index.html', './style.css?v=2.10.0', './v2.css?v=2.10.0', './extra.js?v=2.10.0', './v2.js?v=2.10.0', './soundboard.js?v=2.10.0', './app.js?v=2.10.0',
   './motifs/whale.svg', './motifs/tractor.svg', './motifs/castle.svg', './motifs/chase.svg', './motifs/marshall.svg', './motifs/skye.svg', './motifs/peppa.svg', './motifs/miffy.svg',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'
 ];
@@ -14,48 +14,23 @@ self.addEventListener('install', event => {
     .then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(Promise.all([
-    caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('bunte-welt-') && k !== CACHE).map(k => caches.delete(k)))),
-    self.clients.claim()
-  ]));
+  // Open tabs may still need their previous version's assets.
+  event.waitUntil(self.clients.claim());
 });
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== scopeURL.origin || !url.pathname.startsWith(scopeURL.pathname)) return;
-
-  // Navigation: Aktuelle Version online laden, gespeicherte Startseite offline öffnen.
   if (req.mode === 'navigate') {
-    event.respondWith((async () => {
-      try {
-        const response = await fetch(req, {cache: 'no-cache'});
-        if (response.ok) {
-          const freshCopy = response.clone();
-          event.waitUntil(caches.open(CACHE).then(cache =>
-            cache.put(new URL('./index.html', scopeURL).href, freshCopy)
-          ));
-        }
-        return response;
-      } catch {
-        return (await caches.match(new URL('./index.html', scopeURL).href)) || Response.error();
-      }
-    })());
+    event.respondWith(caches.open(CACHE).then(cache => cache.match(new URL('./index.html', scopeURL).href)).then(saved => saved || fetch(req)));
     return;
   }
-  // Nur eigene App-Dateien zwischenspeichern, keine beliebigen anderen Dateien.
-  if (!coreURLs.has(url.href)) return;
-  // Online zuerst frische Dateien laden; offline auf gespeicherte Dateien zurückfallen.
+  const versionedAsset = /\.(js|css)$/.test(url.pathname) && url.searchParams.has('v');
+  if (!coreURLs.has(url.href) && !versionedAsset) return;
   event.respondWith((async () => {
-    try {
-      const response = await fetch(req, {cache: 'no-cache'});
-      if (response.ok) {
-        const freshCopy = response.clone();
-        event.waitUntil(caches.open(CACHE).then(cache => cache.put(req, freshCopy)));
-      }
-      return response;
-    } catch {
-      return (await caches.match(req)) || Response.error();
-    }
+    const current = await caches.open(CACHE);
+    const saved = await current.match(req) || await caches.match(req);
+    return saved || fetch(req);
   })());
 });

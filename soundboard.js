@@ -12,7 +12,13 @@ const soundPads=[
  {id:'owl',name:'Eule',icon:'🦉',echo:'☾',color:'#ebe3fb'},
  {id:'horn',name:'Hupe',icon:'🚗',echo:'♫',color:'#ffe2d4'},
  {id:'xylophone',name:'Xylophon',icon:'🎶',echo:'♪',color:'#ffeec4'},
- {id:'bee',name:'Biene',icon:'🐝',echo:'✿',color:'#f5efbc'}
+ {id:'bee',name:'Biene',icon:'🐝',echo:'✿',color:'#f5efbc'},
+ {id:'wind',name:'Wind',icon:'🍃',echo:'≈',color:'#deedc5'},
+ {id:'water',name:'Wassertropfen',icon:'💧',echo:'○',color:'#d7eaf8'},
+ {id:'cat',name:'Kätzchen',icon:'🐱',echo:'♪',color:'#ffe2d4'},
+ {id:'space',name:'Weltraum',icon:'🚀',echo:'✧',color:'#ebe3fb'},
+ {id:'harp',name:'Harfe',icon:'🎼',echo:'♫',color:'#fff1b9'},
+ {id:'heartbeat',name:'Herzklopfen',icon:'💗',echo:'♡',color:'#ffe0e9'}
 ];
 
 // Short, locally generated sound effects. All voices share one output level.
@@ -27,6 +33,24 @@ function makePadSound(context,id){
   const wave=cycles=>Math.sin(tau*cycles);
   let value=0;
   switch(id){
+   case 'wind':
+    noise=0.96*noise+0.04*(2*Math.random()-1);
+    value=3*noise*Math.sin(Math.PI*t/duration)**2; break;
+   case 'water':{
+    const u=t%0.4; value=Math.exp(-24*u)*wave(700*u+2200*u*u); break;
+   }
+   case 'cat':
+    value=(wave(620*t-140*t*t)+0.2*wave(1240*t-280*t*t))*Math.sin(Math.PI*t/duration)**2; break;
+   case 'space':
+    value=wave(220*t+380*t*t)*(0.5+0.5*wave(8*t))*Math.sin(Math.PI*t/duration)**2; break;
+   case 'harp':{
+    const n=Math.min(4,Math.floor(t/0.25)),u=t-n*0.25;
+    value=wave([262,330,392,523,659][n]*u)*Math.exp(-8*u); break;
+   }
+   case 'heartbeat':{
+    const u=t%0.7;
+    value=wave(65*t)*(Math.exp(-35*u)+(u>0.2?0.65*Math.exp(-35*(u-0.2)):0)); break;
+   }
    case 'bird':{
     const u=t%0.38;
     if(t<1.14&&u<0.23)value=wave(1450*u+2800*u*u+0.8*Math.sin(18*u))*Math.sin(Math.PI*u/0.23)**2;
@@ -144,10 +168,10 @@ function soundboard(){
  on('bubble-more','click',addBubble);
  on('bubble-back','click',()=>bubbles(false));
  on('sound-next','click',()=>{
-  silence();page=1-page;
+  silence();page=(page+1)%Math.ceil(soundPads.length/6);
   const next=document.getElementById('sound-next');
-  next.textContent=page?'⬅':'➜';
-  next.setAttribute('aria-label',page?'Erste Klänge':'Weitere Klänge');
+  next.textContent=`${page+1}/${Math.ceil(soundPads.length/6)} ➜`;
+  next.setAttribute('aria-label',`Klangseite ${page+1}. Weitere Klänge`);
   app.querySelectorAll('[data-pad]').forEach((b,i)=>{b.hidden=Math.floor(i/6)!==page;b.classList.remove('pad-playing');});
  });
  on('sound-back','click',()=>route('draw'));

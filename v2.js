@@ -311,7 +311,7 @@ function v2Draw(){
     const character=characters.some(([id])=>id===motif);
     const source=character?'motifs/'+motif+'.svg':'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff'));
     await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=source;});
-    const scale=Math.min(tmp.width/720,tmp.height*.72/480);
+    const scale=Math.min(tmp.width/720,tmp.height*.90/480);
     t.drawImage(image,(tmp.width-720*scale)/2,(tmp.height-480*scale)/2,720*scale,480*scale);
     // Lift the printed lines from the untouched template, before the first finger stroke.
     lines=tmp.cloneNode();
