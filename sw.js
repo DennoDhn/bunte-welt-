@@ -31,8 +31,9 @@ self.addEventListener('fetch', event => {
       try {
         const response = await fetch(req, {cache: 'no-cache'});
         if (response.ok) {
+          const freshCopy = response.clone();
           event.waitUntil(caches.open(CACHE).then(cache =>
-            cache.put(new URL('./index.html', scopeURL).href, response.clone())
+            cache.put(new URL('./index.html', scopeURL).href, freshCopy)
           ));
         }
         return response;
@@ -49,7 +50,8 @@ self.addEventListener('fetch', event => {
     try {
       const response = await fetch(req, {cache: 'no-cache'});
       if (response.ok) {
-        event.waitUntil(caches.open(CACHE).then(cache => cache.put(req, response.clone())));
+        const freshCopy = response.clone();
+        event.waitUntil(caches.open(CACHE).then(cache => cache.put(req, freshCopy)));
       }
       return response;
     } catch {
