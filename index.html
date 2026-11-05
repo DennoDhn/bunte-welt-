@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="application-version" content="2.9.0">
+  <meta name="application-version" content="2.9.1">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#F8F7F2">
   <meta name="description" content="Eine liebevolle, werbefreie und offline nutzbare Spiel- und Malwelt für kleine Kinder.">
@@ -12,17 +12,55 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.9.0">
-  <link rel="stylesheet" href="v2.css?v=2.9.0">
+  <link rel="stylesheet" href="style.css?v=2.9.1">
+  <link rel="stylesheet" href="v2.css?v=2.9.1">
   <title>Meine bunte Welt</title>
-  <script src="extra.js?v=2.9.0" defer></script>
-  <script src="v2.js?v=2.9.0" defer></script>
-  <script src="soundboard.js?v=2.9.0" defer></script>
-  <script src="app.js?v=2.9.0" defer></script>
+  <script src="extra.js?v=2.9.1" defer></script>
+  <script src="v2.js?v=2.9.1" defer></script>
+  <script src="soundboard.js?v=2.9.1" defer></script>
+  <script src="app.js?v=2.9.1" defer></script>
 </head>
 <body>
   <div id="app" role="main"></div>
   <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
   <div id="modal-root"></div>
+  <script>
+  /* Sucht nach Updates, ohne laufende Malbilder automatisch zu schließen. */
+  (() => {
+    if (!('serviceWorker' in navigator)) return;
+    let pending = false;
+    let lastInteraction = Date.now();
+    let wasBackground = false;
+    ['pointerdown', 'keydown', 'touchstart'].forEach(type =>
+      document.addEventListener(type, () => { lastInteraction = Date.now(); }, {passive: true})
+    );
+    function safeToReload() {
+      if (!pending || document.visibilityState !== 'visible') return;
+      if (document.body.classList.contains('studio-active')) return;
+      if (Date.now() - lastInteraction < 25000 && !wasBackground) return;
+      location.reload();
+    }
+    function checkForUpdates() {
+      if (!navigator.onLine) return;
+      navigator.serviceWorker.getRegistration('./').then(reg => reg?.update()).catch(() => {});
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!navigator.serviceWorker.controller) return;
+      pending = true;
+      safeToReload();
+    });
+    window.addEventListener('online', checkForUpdates);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') wasBackground = true;
+      else { checkForUpdates(); safeToReload(); }
+    });
+    window.addEventListener('load', () => {
+      checkForUpdates();
+      setInterval(checkForUpdates, 15 * 60 * 1000);
+      setInterval(safeToReload, 5000);
+    });
+  })();
+  </script>
+
 </body>
 </html>
