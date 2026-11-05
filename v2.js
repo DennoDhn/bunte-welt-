@@ -124,7 +124,7 @@ function v2Draw(){
  const profile=v2Profile(),draftId=v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
  const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830']];
- const characters=[['mickey','Micky Maus'],['minnie','Minnie Maus'],['lucy','Lasso Lucy'],['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy'],['whale','Wal'],['tractor','Traktor'],['castle','Sandburg']];
+ const characters=[['dog','Hund'],['horse','Pferd'],['cow','Kuh'],['mickey','Micky Maus'],['minnie','Minnie Maus'],['lucy','Lasso Lucy'],['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy'],['whale','Wal'],['tractor','Traktor'],['castle','Sandburg']];
  const brushes=[
   {id:'pencil',name:'Stift',symbol:'✏️',width:8},
   {id:'crayon',name:'Wachsmaler',symbol:'🖍️',width:22},

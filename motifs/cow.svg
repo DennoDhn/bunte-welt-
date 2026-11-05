@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="480" viewBox="0 0 720 480"><title>Kuh</title><g fill="white" stroke="#384150" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M480 251 Q552 232 560 290 L560 325" fill="none"/><path d="M560 318 Q537 334 548 356 Q570 360 578 341 Z"/>
+<path d="M312 299 L307 418 L343 418 L355 304 Z"/><path d="M454 298 L462 418 L498 418 L493 282 Z"/>
+<path d="M306 399 H345 L343 425 H304 Z"/><path d="M460 399 H500 L503 425 H461 Z"/>
+<ellipse cx="392" cy="269" rx="128" ry="82"/>
+<path d="M380 190 Q351 223 380 242 Q410 252 429 220 Q435 202 416 191 Z"/>
+<path d="M461 276 Q425 272 433 304 Q450 332 485 316 Q510 288 483 280 Z"/>
+<path d="M285 315 L276 431 L313 431 L328 325"/>
+<path d="M412 329 L414 431 L451 431 L450 326"/>
+<path d="M277 410 H315 L313 437 H274 Z"/><path d="M413 410 H452 L455 437 H414 Z"/>
+<path d="M236 110 Q207 91 215 56 Q235 73 255 84 Z"/><path d="M335 110 Q365 91 357 56 Q337 73 317 84 Z"/>
+<path d="M230 127 Q178 100 153 132 Q162 171 222 161 Z"/><path d="M341 127 Q393 100 418 132 Q409 171 349 161 Z"/>
+<path d="M218 151 Q217 90 286 87 Q355 90 354 151 L347 232 Q338 263 286 264 Q234 263 225 232 Z"/>
+<path d="M227 135 Q250 112 267 130 Q282 149 263 169 Q243 179 224 162 Z"/>
+<ellipse cx="254" cy="174" rx="11" ry="16"/><ellipse cx="320" cy="174" rx="11" ry="16"/>
+<ellipse cx="256" cy="177" rx="4" ry="7" fill="#384150"/><ellipse cx="318" cy="177" rx="4" ry="7" fill="#384150"/>
+<ellipse cx="286" cy="233" rx="70" ry="41"/>
+<ellipse cx="257" cy="225" rx="6" ry="9" fill="#384150"/><ellipse cx="315" cy="225" rx="6" ry="9" fill="#384150"/>
+<path d="M263 248 Q286 263 309 248" fill="none"/></g></svg>
