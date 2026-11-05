@@ -180,11 +180,25 @@ function v2Draw(){
   if(previous){fitImage(overlay,previous);outline=overlay.toDataURL();}
  }
  let W=0,H=0,paper='#FFFFFF';
+ const phoneViewport=window.matchMedia('(max-width:600px), (max-width:950px) and (max-height:500px)');
+ let resizeMaster=null,outlineMaster=null,resizeRevision=-1;
  function fillPaper(){ctx.save();ctx.fillStyle=paper;ctx.fillRect(0,0,W,H);ctx.restore();}
  function resize(){const r=stage.getBoundingClientRect();if(r.width<40||r.height<40||(W===r.width&&H===r.height))return;
   pointer=null;strokeRegion=null;
   const prev=W&&H?document.createElement('canvas'):null;if(prev){prev.width=canvas.width;prev.height=canvas.height;prev.getContext('2d').drawImage(canvas,0,0);}
-  W=r.width;H=r.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);resizeOutline();fillPaper();if(prev){const ratio=Math.min(W/(prev.width/dpr),H/(prev.height/dpr)),nw=prev.width/dpr*ratio,nh=prev.height/dpr*ratio;ctx.drawImage(prev,0,0,prev.width,prev.height,(W-nw)/2,(H-nh)/2,nw,nh);}
+  // Keep a single source while rotating a phone: never repeatedly shrink padded snapshots.
+  let stable=prev;
+  if(phoneViewport.matches&&prev){
+   if(resizeRevision!==rev||!resizeMaster){
+    resizeMaster=prev;outlineMaster=outline?overlay.cloneNode():null;
+    if(outlineMaster)outlineMaster.getContext('2d').drawImage(overlay,0,0);
+    resizeRevision=rev;
+   }
+   stable=resizeMaster;
+  }else{resizeMaster=null;outlineMaster=null;resizeRevision=-1;}
+  W=r.width;H=r.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);resizeOutline();
+  if(phoneViewport.matches&&outlineMaster){overlay.getContext('2d').clearRect(0,0,overlay.width,overlay.height);fitImage(overlay,outlineMaster);outline=overlay.toDataURL();}
+  fillPaper();if(stable){const prev=stable;const ratio=Math.min(W/(prev.width/dpr),H/(prev.height/dpr)),nw=prev.width/dpr*ratio,nh=prev.height/dpr*ratio;ctx.drawImage(prev,0,0,prev.width,prev.height,(W-nw)/2,(H-nh)/2,nw,nh);}
  }
  resize();const watcher=typeof ResizeObserver!=='undefined'?new ResizeObserver(()=>resize()):null;watcher?.observe(stage);
  const indicator=document.getElementById('studio-save-state');
