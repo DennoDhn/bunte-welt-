@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <meta name="application-version" content="2.11.0">
+  <meta name="application-version" content="2.12.0">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#F8F7F2">
   <meta name="description" content="Eine liebevolle, werbefreie und offline nutzbare Spiel- und Malwelt für kleine Kinder.">
@@ -12,16 +12,84 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <link rel="stylesheet" href="style.css?v=2.11.0">
-  <link rel="stylesheet" href="v2.css?v=2.11.0">
-  <link rel="stylesheet" href="phone.css?v=2.11.0">
+  <link rel="stylesheet" href="style.css?v=2.12.0">
+  <link rel="stylesheet" href="v2.css?v=2.12.0">
+  <link rel="stylesheet" href="phone.css?v=2.12.0">
   <style>button,a,summary{touch-action:manipulation}body.child-activity button{touch-action:none}</style>
   <title>Meine bunte Welt</title>
-  <script src="extra.js?v=2.11.0" defer></script>
-  <script src="v2.js?v=2.11.0" defer></script>
-  <script src="soundboard.js?v=2.11.0" defer></script>
-  <script src="app.js?v=2.11.0" defer></script>
-  <script src="gestures.js?v=2.11.0" defer></script>
+  <script>
+  /* Installationsdialog vor dem Laden der Spiele abfangen. */
+  (() => {
+    let deferredPrompt = null;
+    const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    const isIOS = () => /iPad|iPhone|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isAndroid = () => /Android/i.test(navigator.userAgent);
+    const browser = () => {
+      const ua = navigator.userAgent;
+      if (/EdgA|EdgiOS/i.test(ua)) return 'Edge';
+      if (/FxiOS|Firefox/i.test(ua)) return 'Firefox';
+      if (/CriOS|Chrome/i.test(ua)) return 'Chrome';
+      if (/Safari/i.test(ua)) return 'Safari';
+      return 'Browser';
+    };
+    function renderInstall() {
+      const description = document.getElementById('bw-install-description');
+      const button = document.getElementById('bw-install-button');
+      const guide = document.getElementById('bw-install-guide');
+      if (!description || !button || !guide) return;
+      const installed = standalone();
+      button.hidden = installed;
+      if (installed) {
+        description.textContent = 'Bereits installiert: Du verwendest Meine bunte Welt als eigenständige App.';
+        guide.textContent = 'Du kannst sie künftig direkt über das App-Symbol auf deinem Home-Bildschirm starten.';
+        return;
+      }
+      const b = browser();
+      if (deferredPrompt) {
+        description.textContent = 'Dein Browser unterstützt die direkte Installation.';
+        button.textContent = 'Jetzt installieren';
+      } else {
+        description.textContent = 'Die Installation erfolgt über das Menü deines Browsers.';
+        button.textContent = 'Installationsanleitung anzeigen';
+      }
+      if (isIOS()) {
+        guide.innerHTML = '<strong>iPhone / iPad:</strong><ol><li>Öffne die Website in Safari.</li><li>Tippe auf das Teilen-Symbol (Quadrat mit Pfeil nach oben) oder in neueren Safari-Versionen auf das Seitenmenü und dann auf „Teilen“.</li><li>Wähle „Zum Home-Bildschirm“ bzw. „Zum Home-Bildschirm hinzufügen“.</li><li>Bestätige mit „Hinzufügen“.</li></ol><p>Falls du einen anderen Browser nutzt, öffne die Seite über dessen Funktion „In Safari öffnen“. Je nach iOS-Version kann der Menüpunkt anders aussehen.</p>';
+      } else if (isAndroid()) {
+        guide.innerHTML = '<strong>Android (' + b + '):</strong><ol><li>Öffne die Website im Browser.</li><li>Tippe oben rechts auf das Menü mit den drei Punkten (⋮).</li><li>Wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.</li><li>Bestätige die Installation.</li></ol><p>Wenn „App installieren“ nicht angeboten wird, kann der Browser eventuell nur eine Verknüpfung anlegen.</p>';
+      } else {
+        guide.innerHTML = '<strong>Computer / anderes Gerät:</strong><ol><li>Öffne die Seite in einem PWA-fähigen Browser (z. B. Chrome oder Edge).</li><li>Suche in der Adressleiste oder im Browsermenü nach „App installieren“.</li><li>Bestätige die Installation.</li></ol>';
+      }
+    }
+    window.addEventListener('beforeinstallprompt', event => {
+      event.preventDefault();
+      deferredPrompt = event;
+      renderInstall();
+    });
+    window.addEventListener('appinstalled', () => { deferredPrompt = null; renderInstall(); });
+    window.bwSetupInstall = () => {
+      renderInstall();
+      const button = document.getElementById('bw-install-button');
+      if (!button) return;
+      button.addEventListener('click', async () => {
+        if (!deferredPrompt) {
+          const guide = document.getElementById('bw-install-guide');
+          if (guide) guide.scrollIntoView({behavior:'smooth', block:'nearest'});
+          return;
+        }
+        const prompt = deferredPrompt;
+        deferredPrompt = null;
+        try { await prompt.prompt(); await prompt.userChoice; }
+        catch (e) { console.info('Installation nicht möglich:', e); }
+        renderInstall();
+      });
+    };
+  })();
+  </script>
+  <script src="extra.js?v=2.12.0" defer></script>
+  <script src="v2.js?v=2.12.0" defer></script>
+  <script src="soundboard.js?v=2.12.0" defer></script>
+  <script src="app.js?v=2.12.0" defer></script>
+  <script src="gestures.js?v=2.12.0" defer></script>
 </head>
 <body>
   <div id="app" role="main"></div>
