@@ -31,13 +31,20 @@ function v2CuratedIllustration(key){
 function v2Home(){
  document.body.classList.remove('studio-active');
  const greeting=settings.childName?`Hallo, ${esc(settings.childName)}!`:'Was möchtest du machen?';
+ const chosen=Array.isArray(settings.favorites)?settings.favorites:[];
+ const byId=new Map(ALL_ACTIVITIES.map(a=>[a[0],a]));
+ // Keep the most requested activities one tap away, even before a parent sets favorites.
+ const quickIds=[...new Set(['puzzle','stars','scratch',...chosen])].slice(0,7);
+ const quick=quickIds.map(id=>byId.get(id)).filter(Boolean);
  app.innerHTML=`<main class="v2-home"><header class="v2-home-head"><div class="v2-brand"><span class="v2-brand-mark">✳</span><span>Meine bunte Welt</span></div><button class="v2-circle v2-parent-link" id="parent" aria-label="Elternbereich">${v2Icon('gear',25)}</button></header><section class="v2-welcome"><h1>${greeting}</h1></section><div class="v2-hometiles">
  <button class="v2-hometile peach" data-v2to="draw">${v2CuratedIllustration('draw')}<strong>Malen</strong></button>
  <button class="v2-hometile lilac" data-v2to="color">${v2CuratedIllustration('color')}<strong>Ausmalen</strong></button>
  <button class="v2-hometile blue" data-v2to="play">${v2CuratedIllustration('play')}<strong>Spielen</strong></button>
  <button class="v2-hometile green" data-v2to="explore">${v2CuratedIllustration('explore')}<strong>Entdecken</strong></button></div>
+ <section aria-label="Spiele direkt starten" style="margin-top:26px"><h2 style="font-size:clamp(20px,2.6vw,28px);margin:0 0 14px">Direkt losspielen</h2><div class="v2-cardgrid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px">${quick.map(([id,name,emoji],i)=>`<button class="v2-gamecard tone-${i%5}" data-quick-game="${id}" style="min-height:118px;padding:14px 8px" aria-label="${esc(name)} direkt starten"><span class="v2-emoji" aria-hidden="true" style="font-size:34px">${emoji}</span><strong style="font-size:clamp(14px,1.8vw,18px)">${esc(name)}</strong></button>`).join('')}</div></section>
  <footer class="v2-home-footer"><button class="v2-gallery-entry" data-v2to="gallery">${v2Icon('gallery',23)} Meine Bilder</button></footer></main>`;
  app.querySelectorAll('[data-v2to]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.v2to; if(['play','explore'].includes(id))route('category',id);else route(id,'paint');}));
+ app.querySelectorAll('[data-quick-game]').forEach(b=>b.addEventListener('click',()=>route(b.dataset.quickGame)));
  on('parent','click',openParentGate);
 }
 function v2Category(){
@@ -368,7 +375,7 @@ function v2Parents(){
  const box=document.createElement('section');box.className='v2-profile-panel';
  box.innerHTML=`<div class="parent-links"><button id="mini-resume" class="tool-btn">🖍️ Zum Malblatt</button><button id="mini-activities" class="tool-btn">Spielauswahl öffnen</button></div><h2>Kinderprofile</h2><p>Jedes Kind erhält eigene Malblätter und eine eigene Bildergalerie. Bestehende Bilder gehören zum ersten Profil.</p><div class="v2-profile-row"><select id="v2-profile-select" aria-label="Aktives Kinderprofil">${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===active?'selected':''}>${esc(p.name)}</option>`).join('')}</select><input id="v2-profile-name" maxlength="24" placeholder="Neuer Kindername" aria-label="Neuer Kindername"/><button id="v2-add-profile" type="button">Profil hinzufügen</button></div><p class="v2-profile-note">Für jedes Profil kannst du die anderen Familieneinstellungen getrennt anpassen, indem du das Profil auswählst.</p>`;
  panel.insertBefore(box,panel.firstChild);
- on('mini-resume','click',()=>route('draw'));on('mini-activities','click',()=>route('home'));
+ on('mini-resume','click',()=>route('draw'));on('mini-activities','click',()=>route('category','play'));
  box.querySelector('#v2-profile-select').addEventListener('change',e=>{const selected=profiles.find(p=>p.id===e.target.value);if(!selected)return;store.set('v2-active-profile',selected.id);const prefs=store.get('v2-profile-settings-'+selected.id,{});settings=Object.assign(settings,prefs,{childName:selected.name});store.set('settings',settings);route('parents');});
  box.querySelector('#v2-add-profile').addEventListener('click',()=>{const name=box.querySelector('#v2-profile-name').value.trim();if(!name)return toast('Bitte einen Namen eingeben.');if(profiles.length>=6)return toast('Maximal sechs Profile.');const id='kid-'+Date.now();profiles.push({id,name:name.slice(0,24)});store.set('v2-profiles',profiles);store.set('v2-active-profile',id);store.set('v2-profile-settings-'+id,{childName:name.slice(0,24),ageBand:'2'});settings.childName=name.slice(0,24);settings.ageBand='2';store.set('settings',settings);route('parents');});
  for(const id of ['setting-name','setting-age','setting-theme','setting-sound','setting-quiet','setting-easy','setting-fullscreen']){
