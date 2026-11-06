@@ -1,4 +1,4 @@
-/* Bunte Welt 2.12.2 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
+/* Bunte Welt 2.12.4 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
    Ergänzt bestehende Spiele, ohne Galerie oder gespeicherte Malbilder zu ändern. */
 (function () {
   'use strict';
@@ -9,6 +9,7 @@
     {name:'Bär', icon:'🐻', kind:'bear', sky:'#E4F5E7', face:'#BF895E', inner:'#E7B08C'},
     {name:'Fuchs', icon:'🦊', kind:'fox', sky:'#FFE7DE', face:'#EA9758', inner:'#F6D0BA'},
     {name:'Kuh', icon:'🐮', kind:'cow', sky:'#DEF3F6', face:'#F9F8F0', inner:'#DDA0AF'},
+    {name:'Pferd', icon:'🐴', kind:'horse', sky:'#ECF5E6', face:'#DAB18A', inner:'#B8876D'},
     {name:'Einhorn', icon:'🦄', kind:'unicorn', sky:'#EDE7FF', face:'#FFFAF2', inner:'#E5AFDF'},
     {name:'Löwe', icon:'🦁', kind:'lion', sky:'#FFF1BF', face:'#F4C070', inner:'#CD8F4B'}
   ];
@@ -241,5 +242,5 @@
   /* render() resolves puzzle dynamically; scratch is cached in EXTRA_PAGES. */
   puzzle=enhancedPuzzle;
   EXTRA_PAGES.scratch=enhancedScratch;
-  window.bwMiniGamesPlus={version:'2.12.2',gridFor:gridFor,animalCount:animals.length,magicCount:magic.length};
+  window.bwMiniGamesPlus={version:'2.12.4',gridFor:gridFor,animalCount:animals.length,magicCount:magic.length};
 })();
