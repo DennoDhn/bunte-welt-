@@ -1,0 +1,41 @@
+/* Bunte Welt 2.12.2: only puzzle and scratch activities */
+.bw-puzzle-game,.bw-magic-game{gap:12px!important;padding-bottom:12px}
+.bw-motif-strip,.bw-magic-tabs{display:flex;gap:8px;width:100%;max-width:860px;overflow-x:auto;flex:0 0 auto;scrollbar-width:thin;align-self:center;justify-content:flex-start;-webkit-overflow-scrolling:touch}
+.bw-motif-button,.bw-magic-tab{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:76px;min-height:67px;border-radius:16px;background:#f2f3f8;padding:6px;color:#455668}
+.bw-motif-button span,.bw-magic-tab span{font-size:29px;line-height:1.1}
+.bw-motif-button small,.bw-magic-tab small{font-size:11px;font-weight:750}
+.bw-motif-button.active,.bw-magic-tab.active{background:#dcefdc;outline:3px solid #88ba8e;outline-offset:-3px}
+.bw-puzzle-layout{width:100%;max-width:780px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(10px,2vw,22px);align-items:center;justify-content:center}
+.bw-puzzle-board{display:grid;position:relative;width:100%;max-width:360px;aspect-ratio:1;isolation:isolate;border:5px solid #e9b991;border-radius:20px;overflow:hidden;background:#fff6ed;margin:auto}
+.bw-puzzle-preview{position:absolute;inset:0;z-index:0;opacity:.18;background-position:center;background-size:100% 100%;pointer-events:none}
+.bw-puzzle-slot{position:relative;z-index:1;min-width:0;min-height:0;border:1.5px dashed #ccaa9477;background-color:transparent;background-repeat:no-repeat;padding:0}
+.bw-puzzle-slot.filled{border:1.5px solid #ffffffa5}
+.bw-puzzle-pieces{display:grid;gap:8px;width:100%;max-width:340px;margin:auto;justify-items:stretch;align-items:center}
+.bw-puzzle-piece{width:100%;min-height:0;border:3px solid #fff7ec;border-radius:12px;background-color:#fff3e4;background-repeat:no-repeat;box-shadow:0 3px 8px #28344922;touch-action:none;-webkit-user-select:none;user-select:none}
+.bw-puzzle-piece.selected{outline:5px solid #6d8bce;outline-offset:1px;transform:scale(1.02)}
+.bw-puzzle-piece.placed{visibility:hidden}
+.bw-puzzle-ghost{border-radius:12px;border:3px solid #fff;box-shadow:0 12px 25px #28344955;background-color:#fff3e4;background-repeat:no-repeat}
+.bw-game-message{font-size:clamp(14px,1.8vw,19px);padding:8px 17px;min-height:35px}
+.bw-game-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;flex:0 0 auto}
+.bw-game-actions .big-btn{min-width:0;min-height:48px;padding:8px 15px;font-size:16px}
+.bw-game-actions [hidden]{display:none!important}
+.bw-magic-stage{width:min(100%,780px);min-height:210px;flex:0 1 auto;border-radius:20px}
+.bw-magic-stage canvas{width:100%;height:100%}
+.bw-magic-tab{min-height:60px;min-width:68px;margin:3px 0}
+@media(max-width:650px), (orientation:portrait) and (max-width:900px){
+  .bw-puzzle-layout{grid-template-columns:1fr;gap:10px;max-width:360px}
+  .bw-puzzle-board{max-width:min(100%,300px)}
+  .bw-puzzle-pieces{max-width:min(100%,300px);gap:6px}
+  .bw-puzzle-game{justify-content:flex-start}
+  .bw-motif-button{min-width:68px;min-height:60px}
+}
+@media(max-height:720px) and (orientation:landscape){
+  body.focus-mode .bw-puzzle-game,body.focus-mode .bw-magic-game{gap:7px!important;padding-top:53px}
+  body.focus-mode .bw-puzzle-board{max-width:min(42vh,320px)}
+  body.focus-mode .bw-puzzle-pieces{max-width:min(42vh,320px)}
+  body.focus-mode .bw-motif-button{min-height:49px;min-width:63px}
+  body.focus-mode .bw-motif-button span{font-size:25px}
+  body.focus-mode .bw-magic-tab{min-height:47px;padding:3px}
+  body.focus-mode .bw-magic-stage{min-height:135px;max-height:calc(100dvh - 220px);width:auto;aspect-ratio:90/57}
+}
+@media(prefers-reduced-motion:reduce){.bw-puzzle-piece{transition:none}}
