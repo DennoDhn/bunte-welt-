@@ -106,6 +106,7 @@ function draw(){return v2Draw();}
 /* Tap-to-fill SVG-Ausmalbilder */
 function part(tag,attrs,key,state){const fill=/^#[0-9a-f]{6}$/i.test(state[key])?state[key]:'#ffffff';return `<${tag} ${attrs} data-colorpart="${key}" fill="${fill}" stroke="#55647A" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />`;}
 function templateSvg(which,state){
+ if((which==='horse'||which==='unicorn')&&window.bwHorseUnicornColoring)return window.bwHorseUnicornColoring(which,state);
  const bg=`<rect x="0" y="0" width="720" height="480" rx="28" fill="#ffffff"/>`;
  let s='';
  if(which==='fish')s=`<path d="M 32 388 Q 250 360 460 392 T 710 378" fill="none" stroke="#b5e2f1" stroke-width="13"/><circle cx="102" cy="130" r="17" fill="none" stroke="#a7d6ed" stroke-width="5"/><circle cx="130" cy="93" r="10" fill="none" stroke="#a7d6ed" stroke-width="4"/>${part('path','d="M 216 225 L 70 128 L 70 335 Z"','tail',state)}${part('path','d="M 298 169 L 368 63 L 422 181 Z"','top',state)}${part('ellipse','cx="396" cy="241" rx="194" ry="112"','body',state)}${part('path','d="M 376 270 Q 433 336 496 293 Q 435 267 376 270 Z"','fin',state)}<circle cx="504" cy="220" r="17" fill="#55647a"/><circle cx="510" cy="214" r="6" fill="white"/><path d="M 545 268 Q 568 277 582 255" fill="none" stroke="#55647a" stroke-width="6" stroke-linecap="round"/>`;
@@ -121,7 +122,7 @@ function templateSvg(which,state){
  return `<svg id="color-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" role="img" aria-label="Ausmalbild">${bg}${s}</svg>`;
 }
 function color(){
- const templates=[['fish','🐠 Fisch'],['flower','🌼 Blume'],['house','🏠 Haus'],['butterfly','🦋 Schmetterling'],['car','🚗 Auto'],['balloons','🎈 Ballons'],['sun','☀️ Sonne'],['tree','🌳 Baum'],['cat','🐱 Katze'],['rocket','🚀 Rakete']];
+ const templates=[['fish','🐠 Fisch'],['flower','🌼 Blume'],['house','🏠 Haus'],['butterfly','🦋 Schmetterling'],['car','🚗 Auto'],['balloons','🎈 Ballons'],['sun','☀️ Sonne'],['tree','🌳 Baum'],['cat','🐱 Katze'],['rocket','🚀 Rakete'],['horse','🐴 Pferd'],['unicorn','🦄 Einhorn']];
  let which=store.get('selected-template','fish');if(!templates.some(t=>t[0]===which))which='fish';
  const selected={value:COLORS[0][1]};
  const profile=v2Profile();

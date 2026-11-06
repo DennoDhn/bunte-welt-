@@ -83,7 +83,7 @@ function families(){
 async function exportCompleteBackup(){
  try{
    const pictures=await allPics();const coloring={};
-   for(const k of ['fish','flower','house','butterfly','car','balloons','sun','tree','cat','rocket'])coloring[k]=store.get('coloring-'+k,{});
+   for(const k of ['fish','flower','house','butterfly','car','balloons','sun','tree','cat','rocket','horse','unicorn'])coloring[k]=store.get('coloring-'+k,{});
    const stickersSaved={};for(const k of Object.keys(STICKER_SETS))stickersSaved[k]=store.get('sticker-'+k,[]);
    const safeSettings={...settings};delete safeSettings.parentPin;delete safeSettings.pin;
    const payload={type:'meine-bunte-welt-backup',version:1,created:new Date().toISOString(),pictures,coloring,stickers:stickersSaved,settings:safeSettings,profiles:store.get('v2-profiles',[{id:'main',name:safeSettings.childName||'Kind 1'}]),activeProfile:v2Profile()};
@@ -100,7 +100,7 @@ function restoreCompleteBackup(file){
    for(const p of data.pictures){if(!p||!['gallery','draft'].includes(p.type)||typeof p.data!=='string'||!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(p.data)||p.data.length>8000000)continue;
      if(p.type==='draft')continue;const id='restored-'+Date.now()+'-'+count+'-'+Math.floor(Math.random()*1000000);await putPic({id,type:'gallery',label:typeof p.label==='string'?p.label.slice(0,60):'Wiederhergestelltes Bild',created:Number.isFinite(p.created)?p.created:Date.now(),data:p.data,outline:typeof p.outline==='string'&&p.outline.length<=8000000&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(p.outline)?p.outline:null,profile:typeof p.profile==='string'&&/^(main|kid-[0-9]+)$/.test(p.profile)?p.profile:'main'});count++;}
    if(Array.isArray(data.profiles)){const valid=data.profiles.filter(v=>v&&typeof v.id==='string'&&/^(main|kid-[0-9]+)$/.test(v.id)&&typeof v.name==='string'&&v.name.length<=24).slice(0,6);if(valid.length&&valid.some(v=>v.id==='main'))store.set('v2-profiles',valid);}
-   for(const k of ['fish','flower','house','butterfly','car','balloons','sun','tree','cat','rocket']){const obj=data.coloring?.[k];if(obj&&typeof obj==='object'&&!Array.isArray(obj)&&JSON.stringify(obj).length<3000)store.set('coloring-'+k,obj);}
+   for(const k of ['fish','flower','house','butterfly','car','balloons','sun','tree','cat','rocket','horse','unicorn']){const obj=data.coloring?.[k];if(obj&&typeof obj==='object'&&!Array.isArray(obj)&&JSON.stringify(obj).length<3000)store.set('coloring-'+k,obj);}
    for(const k of Object.keys(STICKER_SETS)){const arr=data.stickers?.[k];if(Array.isArray(arr))store.set('sticker-'+k,arr.filter(v=>v&&typeof v.emoji==='string'&&v.emoji.length<10&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&Number.isFinite(v.size)).slice(0,70));}
    const sc=data.settings;if(sc&&typeof sc==='object'){
      const keys=['sound','quiet','easy','childName','ageBand','theme','fullscreenDefault','favorites'];
