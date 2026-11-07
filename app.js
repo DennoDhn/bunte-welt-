@@ -108,7 +108,7 @@ function draw(){return v2Draw();}
 function part(tag,attrs,key,state){const fill=/^#[0-9a-f]{6}$/i.test(state[key])?state[key]:'#ffffff';return `<${tag} ${attrs} data-colorpart="${key}" fill="${fill}" stroke="#55647A" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />`;}
 function templateSvg(which,state){
  const alias={horse:'m-1f40e',unicorn:'m-1f984'};
- const id=Object.hasOwn(alias,which)&&!Object.keys(state).some(k=>!/^\d+$|^sheet-\d+$/.test(k))?alias[which]:which;
+ const id=Object.prototype.hasOwnProperty.call(alias,which)&&!Object.keys(state).some(k=>!/^\d+$|^sheet-\d+$/.test(k))?alias[which]:which;
  const item=WORLDS.flatMap(w=>w.items).find(m=>m.id===id);
  if(item)return motifSvg(item,state).replace('<svg ','<svg id="color-svg" ');
  if((which==='horse'||which==='unicorn')&&window.bwHorseUnicornColoring)return window.bwHorseUnicornColoring(which,state);
