@@ -1,5 +1,6 @@
 'use strict';
 const WORLDS=[];
+const COLORING_SHEETS={};
 let currentWorld=null;
 let requestedMotif=null;
 const WORLD_GAMES=[
@@ -8,6 +9,15 @@ const WORLD_GAMES=[
  ['trail','Spuren malen','👣'],['story','Meine kleine Geschichte','📖']
 ];
 function motifSvg(item,colors=null){
+ if(item.sheet){
+   const sheet=COLORING_SHEETS[item.sheet];
+   const areas=sheet.areas.map((d,i)=>{
+     const key='sheet-'+i, saved=colors?.[key];
+     const fill=/^#[0-9a-f]{6}$/i.test(saved)?saved:'#ffffff';
+     return '<path d="'+d+'" fill="'+fill+'" fill-rule="evenodd" data-colorpart="'+key+'"/>';
+   }).join('');
+   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+sheet.viewBox+'" role="img" aria-label="'+esc(sheet.name)+'"><metadata>'+esc(sheet.source)+' · Public Domain · SuperColoring</metadata>'+areas+'<image width="'+sheet.width+'" height="'+sheet.height+'" href="'+sheet.ink+'" pointer-events="none"/></svg>';
+ }
  const body=item.shapes.map(([tag,attrs],i)=>{
    const a={...attrs};
    if(colors && a.fill!=='none'){
@@ -40,7 +50,7 @@ function worldMotifs(){
 }
 function colorKey(id){return v2Profile()==='main'?'coloring-'+id:'coloring-'+v2Profile()+'-'+id;}
 function worldMotion(){return store.get('world-motion-'+v2Profile(),true)&&!matchMedia('(prefers-reduced-motion: reduce)').matches;}
-function worldCredit(){return '<small class="world-credit">Motivgrafiken: Twemoji, © Twitter, Inc. und Mitwirkende, fortgeführt von jdecked/twemoji. <a href="https://github.com/jdecked/twemoji">Grafikquelle</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Für Ausmalflächen und Spiele bearbeitet.</small>';}
+function worldCredit(){return '<small class="world-credit">Ausmalvorlagen von SuperColoring (Public Domain): <a href="https://www.supercoloring.com/media/coloring/2075294/horse-mare-and-foal">Stute mit Fohlen</a>, <a href="https://www.supercoloring.com/media/coloring/2075297/baby-horse-pony">Pony</a>, <a href="https://www.supercoloring.com/media/coloring/804975/unicorn">Einhorn</a>. Übrige Kataloggrafiken: Twemoji, © Twitter, Inc. und Mitwirkende, fortgeführt von jdecked/twemoji. <a href="https://github.com/jdecked/twemoji">Grafikquelle</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Für Ausmalflächen und Spiele bearbeitet.</small>';}
 const WORLD_SOUNDS=[
  [['bird','🐦','Vogel'],['bee','🐝','Biene'],['water','💧','Wasser']],
  [['cat','🐈','Katze'],['bell','🔔','Glöckchen'],['bird','🦜','Vogel']],

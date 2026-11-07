@@ -108,7 +108,7 @@ function draw(){return v2Draw();}
 function part(tag,attrs,key,state){const fill=/^#[0-9a-f]{6}$/i.test(state[key])?state[key]:'#ffffff';return `<${tag} ${attrs} data-colorpart="${key}" fill="${fill}" stroke="#55647A" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />`;}
 function templateSvg(which,state){
  const alias={horse:'m-1f40e',unicorn:'m-1f984'};
- const id=Object.hasOwn(alias,which)&&!Object.keys(state).some(k=>!/^\d+$/.test(k))?alias[which]:which;
+ const id=Object.hasOwn(alias,which)&&!Object.keys(state).some(k=>!/^\d+$|^sheet-\d+$/.test(k))?alias[which]:which;
  const item=WORLDS.flatMap(w=>w.items).find(m=>m.id===id);
  if(item)return motifSvg(item,state).replace('<svg ','<svg id="color-svg" ');
  if((which==='horse'||which==='unicorn')&&window.bwHorseUnicornColoring)return window.bwHorseUnicornColoring(which,state);
@@ -134,7 +134,7 @@ function color(){
  const profile=v2Profile();
  const stateKey=()=>profile==='main'?'coloring-'+which:'coloring-'+profile+'-'+which;
  function state(){return store.get(stateKey(),{});}
- frame('Buntes Ausmalen','Tippe erst auf eine Farbe und dann auf das Bild.',`<div class="panel coloring-panel"><details id="motif-picker"><summary><span aria-hidden="true">📖</span> Bild aussuchen</summary><div class="chip-row" id="templates">${templates.map(([id,title])=>`<button class="chip ${which===id?'active':''}" data-template="${id}" aria-label="${title}"><span aria-hidden="true">${title.split(' ')[0]}</span> ${title.split(' ')[1]}</button>`).join('')}</div></details><div class="paint-tools">${palette(selected.value)}</div><div class="coloring-surface" id="coloring-surface">${templateSvg(which,state())}</div><div class="toolbar" style="margin-top:17px"><button class="tool-btn" id="undo-color" disabled>↶ Rückgängig</button><button class="tool-btn soft" id="reset-coloring">🧽 Farben entfernen</button><button class="tool-btn primary" id="save-coloring">💛 In meine Bilder</button></div></div>`);
+ frame('Buntes Ausmalen','Tippe erst auf eine Farbe und dann auf das Bild.',`<div class="panel coloring-panel"><details id="motif-picker"><summary><span aria-hidden="true">📖</span> Bild aussuchen</summary><div class="chip-row" id="templates">${templates.map(([id,title])=>`<button class="chip ${which===id?'active':''}" data-template="${id}" aria-label="${title}"><span aria-hidden="true">${title.split(' ')[0]}</span> ${esc(title.slice(title.indexOf(' ')+1))}</button>`).join('')}</div></details><div class="paint-tools">${palette(selected.value)}</div><div class="coloring-surface" id="coloring-surface">${templateSvg(which,state())}</div><div class="toolbar" style="margin-top:17px"><button class="tool-btn" id="undo-color" disabled>↶ Rückgängig</button><button class="tool-btn soft" id="reset-coloring">🧽 Farben entfernen</button><button class="tool-btn primary" id="save-coloring">💛 In meine Bilder</button></div></div>`);
  bindPalette(selected);const surf=document.getElementById('coloring-surface');
  function refresh(){surf.innerHTML=templateSvg(which,state());app.querySelectorAll('[data-template]').forEach(b=>b.classList.toggle('active',b.dataset.template===which));}
  surf.addEventListener('click',e=>{let el=e.target.closest('[data-colorpart]');if(!el)return;let s=state();undo.push({...s});if(undo.length>50)undo.shift();document.getElementById('undo-color').disabled=false;s[el.dataset.colorpart]=selected.value;store.set(stateKey(),s);el.setAttribute('fill',selected.value);beep('pop');});
