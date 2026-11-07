@@ -1,4 +1,4 @@
-/* Bunte Welt 2.14.1 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
+/* Bunte Welt 2.14.2 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
    Ergänzt bestehende Spiele, ohne Galerie oder gespeicherte Malbilder zu ändern. */
 (function () {
   'use strict';
@@ -298,5 +298,5 @@
   /* render() resolves puzzle dynamically; scratch is cached in EXTRA_PAGES. */
   puzzle=enhancedPuzzle;
   EXTRA_PAGES.scratch=enhancedScratch;
-  window.bwMiniGamesPlus={version:'2.14.1',gridFor:gridFor,animalCount:legacyAnimals.length+24,magicCount:oldMagic.length+18};
+  window.bwMiniGamesPlus={version:'2.14.2',gridFor:gridFor,animalCount:legacyAnimals.length+24,magicCount:oldMagic.length+18};
 })();
