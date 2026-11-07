@@ -136,7 +136,7 @@ function v2Draw(){
  const profile=v2Profile(),draftId=v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
  const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830']];
- const characters=[['dog','Hund'],['horse','Pferd'],['unicorn','Einhorn'],['cow','Kuh'],['mickey','Micky Maus'],['minnie','Minnie Maus'],['lucy','Lasso Lucy'],['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy'],['whale','Wal'],['tractor','Traktor'],['castle','Sandburg']];
+ const characters=[['dog','Hund'],['horse','Pferd'],['unicorn','Einhorn'],['pony','Pony'],['cow','Kuh'],['mickey','Micky Maus'],['minnie','Minnie Maus'],['lucy','Lasso Lucy'],['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy'],['whale','Wal'],['tractor','Traktor'],['castle','Sandburg']];
  const brushes=[
   {id:'pencil',name:'Stift',symbol:'✏️',width:8},
   {id:'crayon',name:'Wachsmaler',symbol:'🖍️',width:22},
@@ -172,7 +172,7 @@ function v2Draw(){
   </div>
   <div class="mini-motifs mini-extra" id="extra-colors" role="group" aria-label="Weitere Malfarben" hidden>${extraColors.map(swatch).join('')}<button id="studio-eraser" aria-label="Radierer" aria-pressed="false">🧽</button></div>
   <div class="mini-motifs" id="motif-options" role="group" aria-label="Ausmalmotive" hidden>
-   ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="motifs/${id}.svg" alt=""><small>${name}</small></button>`).join('')}
+   ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="${COLORING_SHEETS[id]?.ink||'motifs/'+id+'.svg'}" alt=""><small>${name}</small></button>`).join('')}
    ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus'],['butterfly','🦋','Schmetterling'],['car','🚗','Auto'],['balloons','🎈','Luftballons'],['sun','☀️','Sonne'],['tree','🌳','Baum'],['cat','🐱','Katze'],['rocket','🚀','Rakete']].map(([id,symbol,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img alt="" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(templateSvg(id,{}))}"><small>${name}</small></button>`).join('')}
   </div>
  </section>`;
@@ -335,10 +335,14 @@ function v2Draw(){
    const tmp=document.createElement('canvas');tmp.width=canvas.width;tmp.height=canvas.height;const t=tmp.getContext('2d');t.fillStyle=paper;t.fillRect(0,0,tmp.width,tmp.height);if(motif){
     const image=new Image();
     const character=characters.some(([id])=>id===motif);
-    const source=character?'motifs/'+motif+'.svg':'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff'));
+    // PNG-Konturen ohne verschachtelte SVG-Bilder laden: robuster auf iPad/Safari.
+    const sheet=COLORING_SHEETS[motif];
+    const source=sheet?.ink || (character?'motifs/'+motif+'.svg':'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff')));
     await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=source;});
-    const scale=Math.min(tmp.width/720,tmp.height*.90/480);
-    t.drawImage(image,(tmp.width-720*scale)/2,(tmp.height-480*scale)/2,720*scale,480*scale);
+    const imageW=sheet?.width||image.naturalWidth||720;
+    const imageH=sheet?.height||image.naturalHeight||480;
+    const scale=Math.min(tmp.width*.90/imageW,tmp.height*.90/imageH);
+    t.drawImage(image,(tmp.width-imageW*scale)/2,(tmp.height-imageH*scale)/2,imageW*scale,imageH*scale);
     // Lift the printed lines from the untouched template, before the first finger stroke.
     lines=tmp.cloneNode();
     const raster=t.getImageData(0,0,tmp.width,tmp.height);
