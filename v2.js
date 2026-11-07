@@ -21,6 +21,7 @@ function v2Profile(){return store.get('v2-active-profile','main');}
 function v2DraftId(){const p=v2Profile();return p==='main'?'draft':'draft-'+p;}
 function v2CuratedIllustration(key){
   const paths={
+   music:['#d86a70','#e49757','#e5be65','#8bbb83','#77adc8','#a58cc2'].map((fill,i)=>`<rect x="${30+i*28}" y="${35+i*5}" width="26" height="${102-i*8}" rx="9" fill="${fill}"/><circle cx="${43+i*28}" cy="${49+i*5}" r="3" fill="#fff5db"/>`).join('')+'<path d="m78 155 92-74" stroke="#795d49" stroke-width="8" stroke-linecap="round"/><circle cx="171" cy="80" r="13" fill="#544958"/>',
    draw:'<path d="M22 138q32-49 61-12t60-12" fill="none" stroke="#df637c" stroke-width="13" stroke-linecap="round"/><g transform="rotate(39 147 82)"><rect x="128" y="13" width="38" height="92" rx="6" fill="#df637c"/><path d="M128 104h38l-19 39z" fill="#edbd91"/><path d="m139 127 8 16 8-16z" fill="#704555"/><path d="M138 27v67" stroke="#ffa2ad" stroke-width="8" stroke-linecap="round"/></g>',
    color:'<g stroke="#584d70" stroke-width="5" stroke-linejoin="round"><path d="m34 84 45-32v64z" fill="#fffaf2"/><ellipse cx="129" cy="84" rx="60" ry="43" fill="#f3bf66"/><path d="M119 43q-40 40 0 82-43-3-50-41 6-34 50-41Z" fill="#fffaf2"/><path d="m132 82-22 17 2-32z" fill="#eb879a"/></g><circle cx="164" cy="77" r="6" fill="#443d55"/><g fill="#9ecfdc"><circle cx="200" cy="55" r="9"/><circle cx="214" cy="31" r="5"/></g>',
    play:'<rect x="29" y="75" width="84" height="84" rx="22" fill="#8DBED8" transform="rotate(-13 71 117)"/><rect x="115" y="31" width="80" height="80" rx="20" fill="#F0C976" transform="rotate(13 155 71)"/><circle cx="172" cy="130" r="30" fill="#EAA5B1"/>',
@@ -33,30 +34,28 @@ function v2Home(){
  const greeting=settings.childName?`Hallo, ${esc(settings.childName)}!`:'Was möchtest du machen?';
  const chosen=Array.isArray(settings.favorites)?settings.favorites:[];
  const byId=new Map(ALL_ACTIVITIES.map(a=>[a[0],a]));
- // Keep the most requested activities one tap away, even before a parent sets favorites.
- const quickIds=[...new Set(['puzzle','stars','scratch',...chosen])].slice(0,7);
- const quick=quickIds.map(id=>byId.get(id)).filter(Boolean);
- app.innerHTML=`<main class="v2-home"><header class="v2-home-head"><div class="v2-brand"><span class="v2-brand-mark">✳</span><span>Meine bunte Welt</span></div><button class="v2-circle v2-parent-link" id="parent" aria-label="Elternbereich">${v2Icon('gear',25)}</button></header><section class="v2-welcome"><h1>${greeting}</h1></section><div class="v2-hometiles">
- <button class="v2-hometile peach" data-v2to="draw">${v2CuratedIllustration('draw')}<strong>Malen</strong></button>
- <button class="v2-hometile lilac" data-v2to="color">${v2CuratedIllustration('color')}<strong>Ausmalen</strong></button>
- <button class="v2-hometile blue" data-v2to="play">${v2CuratedIllustration('play')}<strong>Spielen</strong></button>
- <button class="v2-hometile green" data-v2to="explore">${v2CuratedIllustration('explore')}<strong>Entdecken</strong></button></div>
- <section aria-label="Spiele direkt starten" style="margin-top:26px"><h2 style="font-size:clamp(20px,2.6vw,28px);margin:0 0 14px">Direkt losspielen</h2><div class="v2-cardgrid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));gap:12px">${quick.map(([id,name,emoji],i)=>`<button class="v2-gamecard tone-${i%5}" data-quick-game="${id}" style="min-height:118px;padding:14px 8px" aria-label="${esc(name)} direkt starten"><span class="v2-emoji" aria-hidden="true" style="font-size:34px">${emoji}</span><strong style="font-size:clamp(14px,1.8vw,18px)">${esc(name)}</strong></button>`).join('')}</div></section>
- <footer class="v2-home-footer"><button class="v2-gallery-entry" data-v2to="gallery">${v2Icon('gallery',23)} Meine Bilder</button></footer></main>`;
- app.querySelectorAll('[data-v2to]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.v2to; if(['play','explore'].includes(id))route('category',id);else route(id,'paint');}));
- app.querySelectorAll('[data-quick-game]').forEach(b=>b.addEventListener('click',()=>route(b.dataset.quickGame)));
+ byId.set('music',['music','Xylophon','🎶']);
+ byId.set('soundboard',['soundboard','Klangwelt','🔊']);
+ const ids=[...new Set(['draw','puzzle','scratch','music','color','soundboard',...chosen,...byId.keys()])];
+ const cards=ids.filter(id=>byId.has(id)).map((id,i)=>{
+   const [,name,emoji]=byId.get(id);
+   const art=['draw','color','music'].includes(id)?v2CuratedIllustration(id):`<span class="v2-emoji" aria-hidden="true">${emoji}</span>`;
+   return `<button class="v2-gamecard tone-${i%5}" data-game="${id}"><span class="v2-game-art">${art}</span><strong>${esc(name)}</strong></button>`;
+ });
+ app.innerHTML=`<main class="v2-home"><header class="v2-home-head"><div class="v2-brand">Meine bunte Welt</div><button class="v2-circle" id="parent" aria-label="Elternbereich">${v2Icon('gear',25)}</button></header><section class="v2-welcome"><h1>${greeting}</h1></section><div class="v2-cardgrid">${cards.join('')}</div><footer class="v2-home-footer"><button class="v2-gallery-entry" data-game="gallery">🖼️ Meine Bilder</button></footer></main>`;
+ app.querySelectorAll('[data-game]').forEach(button=>button.addEventListener('click',()=>route(button.dataset.game)));
  on('parent','click',openParentGate);
 }
 function v2Category(){
  const c=CATEGORIES[currentCategory];
  const fav=Array.isArray(settings.favorites)?settings.favorites:[];
- app.innerHTML=`<main class="v2-categories"><header class="v2-list-head"><button class="v2-circle" id="back" aria-label="Zurück">${v2Icon('back')}</button><h1>${currentCategory==='paint'?'Kreativ sein':currentCategory==='play'?'Spielen':'Entdecken'}</h1><button class="v2-circle" id="parent" aria-label="Elternbereich">${v2Icon('gear')}</button></header><div class="v2-cardgrid">${c.activities.map(([id,name,emoji],i)=>`<button class="v2-gamecard tone-${i%5}" data-game="${id}"><span class="v2-game-art">${id==='draw'?v2CuratedIllustration('draw'):id==='color'?v2CuratedIllustration('color'):`<span class="v2-emoji" aria-hidden="true">${emoji}</span>`}</span><strong>${name}</strong></button>`).join('')}</div></main>`;
+ app.innerHTML=`<main class="v2-categories"><header class="v2-list-head"><button class="v2-circle" id="back" aria-label="Zur Spielauswahl">🏠</button><h1>${currentCategory==='paint'?'Kreativ sein':currentCategory==='play'?'Spielen':'Entdecken'}</h1><button class="v2-circle" id="parent" aria-label="Elternbereich">${v2Icon('gear')}</button></header><div class="v2-cardgrid">${c.activities.map(([id,name,emoji],i)=>`<button class="v2-gamecard tone-${i%5}" data-game="${id}"><span class="v2-game-art">${id==='draw'?v2CuratedIllustration('draw'):id==='color'?v2CuratedIllustration('color'):`<span class="v2-emoji" aria-hidden="true">${emoji}</span>`}</span><strong>${name}</strong></button>`).join('')}</div></main>`;
  on('back','click',()=>route('home'));on('parent','click',openParentGate);
  app.querySelectorAll('[data-game]').forEach(b=>b.addEventListener('click',()=>route(b.dataset.game)));
 }
 function v2Gallery(){
  const profile=v2Profile();
- app.innerHTML=`<main class="v2-gallery-page"><header class="v2-list-head"><button id="back" class="v2-circle" aria-label="Zurück">${v2Icon('back')}</button><h1>Meine Bilder</h1><button id="gallery-new" class="v2-primary-small">${v2Icon('new',23)} Neues Bild</button></header><div class="v2-gallery-grid" id="v2-gallery-grid"><p>Deine Bilder werden geladen …</p></div></main>`;
+ app.innerHTML=`<main class="v2-gallery-page"><header class="v2-list-head"><button id="back" class="v2-circle" aria-label="Zur Spielauswahl">🏠</button><h1>Meine Bilder</h1><button id="gallery-new" class="v2-primary-small">${v2Icon('new',23)} Neues Bild</button></header><div class="v2-gallery-grid" id="v2-gallery-grid"><p>Deine Bilder werden geladen …</p></div></main>`;
  on('back','click',()=>route('home'));on('gallery-new','click',()=>route('draw'));
  allPics().then(pictures=>{
   if(activePage!=='gallery')return;
@@ -149,7 +148,7 @@ function v2Draw(){
  app.innerHTML=`<section class="v2-studio" aria-label="Freies Malen">
   <div class="v2-studio-surface" id="studio-surface"><canvas id="studio-canvas" aria-label="Malfläche. Male mit deinem Finger oder einem Stift."></canvas><canvas id="studio-outline" aria-hidden="true"></canvas></div>
   <nav class="v2-studio-top" aria-label="Blatt wählen">
-   <button id="studio-parent" aria-label="Elternbereich">${v2Icon('gear',18)}</button>
+   <button id="studio-home" aria-label="Zur Spielauswahl">🏠</button>
    <button id="studio-sounds" aria-label="Klangwelt öffnen">🎵</button>
    <div class="brush-anchor">
     <button id="brush-toggle" aria-controls="brush-options" aria-expanded="false" aria-label="Malwerkzeug: ${brush.name}">${brush.symbol}</button>
@@ -315,7 +314,7 @@ function v2Draw(){
   document.getElementById('studio-motifs').setAttribute('aria-expanded',String(!picker.hidden));
  }
  on('studio-sounds','click',()=>{if(ready&&!busy&&pointer===null)route('soundboard');});
- on('studio-parent','click',()=>{if(!busy)openParentGate();});
+ on('studio-home','click',()=>{if(!busy)route('home');});
  on('studio-motifs','click',()=>{if(ready&&!busy)setPicker(picker.hidden?'motifs':false);});
  on('studio-new','click',()=>nextSheet());
  picker.querySelectorAll('[data-sheet]').forEach(button=>button.addEventListener('click',()=>nextSheet(button.dataset.sheet)));
@@ -375,7 +374,7 @@ function v2Parents(){
  const box=document.createElement('section');box.className='v2-profile-panel';
  box.innerHTML=`<div class="parent-links"><button id="mini-resume" class="tool-btn">🖍️ Zum Malblatt</button><button id="mini-activities" class="tool-btn">Spielauswahl öffnen</button></div><h2>Kinderprofile</h2><p>Jedes Kind erhält eigene Malblätter und eine eigene Bildergalerie. Bestehende Bilder gehören zum ersten Profil.</p><div class="v2-profile-row"><select id="v2-profile-select" aria-label="Aktives Kinderprofil">${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===active?'selected':''}>${esc(p.name)}</option>`).join('')}</select><input id="v2-profile-name" maxlength="24" placeholder="Neuer Kindername" aria-label="Neuer Kindername"/><button id="v2-add-profile" type="button">Profil hinzufügen</button></div><p class="v2-profile-note">Für jedes Profil kannst du die anderen Familieneinstellungen getrennt anpassen, indem du das Profil auswählst.</p>`;
  panel.insertBefore(box,panel.firstChild);
- on('mini-resume','click',()=>route('draw'));on('mini-activities','click',()=>route('category','play'));
+ on('mini-resume','click',()=>route('draw'));on('mini-activities','click',()=>route('home'));
  box.querySelector('#v2-profile-select').addEventListener('change',e=>{const selected=profiles.find(p=>p.id===e.target.value);if(!selected)return;store.set('v2-active-profile',selected.id);const prefs=store.get('v2-profile-settings-'+selected.id,{});settings=Object.assign(settings,prefs,{childName:selected.name});store.set('settings',settings);route('parents');});
  box.querySelector('#v2-add-profile').addEventListener('click',()=>{const name=box.querySelector('#v2-profile-name').value.trim();if(!name)return toast('Bitte einen Namen eingeben.');if(profiles.length>=6)return toast('Maximal sechs Profile.');const id='kid-'+Date.now();profiles.push({id,name:name.slice(0,24)});store.set('v2-profiles',profiles);store.set('v2-active-profile',id);store.set('v2-profile-settings-'+id,{childName:name.slice(0,24),ageBand:'2'});settings.childName=name.slice(0,24);settings.ageBand='2';store.set('settings',settings);route('parents');});
  for(const id of ['setting-name','setting-age','setting-theme','setting-sound','setting-quiet','setting-easy','setting-fullscreen']){
@@ -408,3 +407,4 @@ function seek(){
  function next(){const r=rounds[round%rounds.length];document.getElementById('seek-prompt').textContent='Wo ist '+(r.target==='Schmetterling'?'der ':r.target==='Sonne'?'die ':'die ')+r.target+'?';document.getElementById('seek-grid').innerHTML=r.items.map(e=>`<button class="v2-seek-item" data-symbol="${e}" aria-label="Bild auswählen">${e}</button>`).join('');document.querySelectorAll('.v2-seek-item').forEach(b=>b.addEventListener('click',()=>{let correct=r.items[0];if(r.target==='Sonne')correct='☀️';if(b.dataset.symbol===correct){document.getElementById('seek-status').textContent='Prima entdeckt!';beep();round++;setTimeout(()=>{if(activePage==='seek')next()},550);}else{beep('no');document.getElementById('seek-status').textContent='Schau nochmal genau.';}}));}
  next();
 }
+

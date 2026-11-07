@@ -1,4 +1,4 @@
-/* Bunte Welt 2.12.4 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
+/* Bunte Welt 2.13.0 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
    Ergänzt bestehende Spiele, ohne Galerie oder gespeicherte Malbilder zu ändern. */
 (function () {
   'use strict';
@@ -50,7 +50,7 @@
     return order;
   }
   function enhancedPuzzle() {
-    let chosen=0, parts=defaultParts(), placed=new Set(), selected=null, order=shuffled(parts), suppressClick=0, ghost=null;
+    let chosen=0, parts=defaultParts(), placed=new Set(), selected=null, order=shuffled(parts), drag=null;
     frame('Mein Tier-Puzzle','Tippe auf ein Teil oder ziehe es direkt an die richtige Stelle.',
       '<div class="activity-area bw-puzzle-game">'
       +'<div class="bw-motif-strip" id="bw-puzzle-motifs" aria-label="Tier aussuchen"></div>'
@@ -72,6 +72,7 @@
       board.style.gridTemplateColumns='repeat('+cols+', minmax(0,1fr))';
       board.style.gridTemplateRows='repeat('+rows+', minmax(0,1fr))';
       tray.style.gridTemplateColumns='repeat('+cols+', minmax(0,1fr))';
+      endDrag();
       board.replaceChildren();tray.replaceChildren();
       const preview=document.createElement('div');
       preview.className='bw-puzzle-preview';preview.style.backgroundImage='url("'+image+'")';
@@ -90,7 +91,7 @@
         p.dataset.piece=String(i);p.disabled=placed.has(i);p.setAttribute('aria-label','Puzzleteil '+(i+1));
         p.style.aspectRatio=String(rows)+' / '+String(cols);
         p.style.backgroundImage='url("'+image+'")';p.style.backgroundSize=(cols*100)+'% '+(rows*100)+'%';p.style.backgroundPosition=pos(i,cols,rows);
-        p.addEventListener('click',()=>{if(Date.now()<suppressClick)return;selected=i;beep('pop');draw();});
+        p.addEventListener('click',ev=>{if(ev.detail===0 && !drag){selected=i;beep('pop');draw();}});
         enableDrag(p,i);tray.append(p);
       }
       motifs.querySelectorAll('[data-animal]').forEach(b=>{b.classList.toggle('active',Number(b.dataset.animal)===chosen);});
@@ -105,41 +106,53 @@
       say(placed.size===parts?'Hurra! '+animals[chosen].name+' ist fertig!':'Super! Das passt!');
       draw();
     }
-    function dropGhost(){if(ghost){ghost.remove();ghost=null;}}
-    cleanup.push(dropGhost);
+    function endDrag(){
+      if(!drag)return;
+      const {el,id,ghost}=drag;
+      drag=null;
+      ghost?.remove();
+      el.classList.remove('being-dragged');
+      if(el.hasPointerCapture(id))el.releasePointerCapture(id);
+    }
+    window.addEventListener('blur',endDrag);
+    cleanup.push(()=>{endDrag();window.removeEventListener('blur',endDrag);});
     function enableDrag(el,index){
-      let start=null;
       el.addEventListener('pointerdown',ev=>{
-        if(ev.pointerType==='mouse'&&ev.button!==0)return;
-        start={id:ev.pointerId,x:ev.clientX,y:ev.clientY,moving:false};
+        if(drag || !ev.isPrimary || ev.button!==0)return;
+        drag={id:ev.pointerId,el,x:ev.clientX,y:ev.clientY,ghost:null};
+        el.setPointerCapture(ev.pointerId);
       });
+      function owns(ev){return drag?.el===el && drag.id===ev.pointerId;}
       el.addEventListener('pointermove',ev=>{
-        if(!start||ev.pointerId!==start.id)return;
-        if(!start.moving&&Math.hypot(ev.clientX-start.x,ev.clientY-start.y)>12){
-          start.moving=true;
-          const box=el.getBoundingClientRect();ghost=el.cloneNode(false);
-          ghost.removeAttribute('id');ghost.className='bw-puzzle-ghost';
-          ghost.style.cssText=el.style.cssText;ghost.style.width=box.width+'px';ghost.style.height=box.height+'px';
-          ghost.style.position='fixed';ghost.style.pointerEvents='none';ghost.style.zIndex='1000';
-          ghost.style.transform='translate(-50%,-50%)';ghost.style.opacity='.92';
+        if(!owns(ev))return;
+        if(!drag.ghost){
+          if(Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)<8)return;
+          const box=el.getBoundingClientRect();
+          const ghost=el.cloneNode(false);
+          ghost.removeAttribute('data-piece');
+          ghost.setAttribute('aria-hidden','true');
+          ghost.tabIndex=-1;
+          ghost.className='bw-puzzle-ghost';
+          Object.assign(ghost.style,{width:box.width+'px',height:box.height+'px',position:'fixed',pointerEvents:'none',zIndex:'1000',transform:'translate(-50%,-50%)'});
+          el.classList.add('being-dragged');
+          drag.ghost=ghost;
           document.body.append(ghost);
-          try{el.setPointerCapture(ev.pointerId);}catch{}
         }
-        if(start.moving){ev.preventDefault();ghost.style.left=ev.clientX+'px';ghost.style.top=ev.clientY+'px';}
+        drag.ghost.style.left=ev.clientX+'px';
+        drag.ghost.style.top=ev.clientY+'px';
       });
-      const release=(ev)=>{
-        if(!start||ev.pointerId!==start.id)return;
-        const moving=start.moving;start=null;
-        if(moving){
-          const target=ev.type==='pointerup'?document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]'):null;
-          dropGhost();suppressClick=Date.now()+350;
-          if(target&&board.contains(target)) place(index,Number(target.dataset.slot));
-          else {selected=index;say('Tippe auf die richtige Stelle.');draw();}
-        }
-      };
-      el.addEventListener('pointerup',release);
-      el.addEventListener('pointercancel',release);
-      el.addEventListener('lostpointercapture',release);
+      el.addEventListener('pointerup',ev=>{
+        if(!owns(ev))return;
+        const moved=!!drag.ghost || Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)>=8;
+        endDrag();
+        if(!moved){selected=index;beep('pop');draw();return;}
+        const slot=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]');
+        if(slot && board.contains(slot)){place(index,Number(slot.dataset.slot));return;}
+        say('Versuch es noch einmal.');
+      });
+      for(const type of ['pointercancel','lostpointercapture']){
+        el.addEventListener(type,ev=>{if(owns(ev))endDrag();});
+      }
     }
     function reset(){placed=new Set();selected=null;order=shuffled(parts);say('Wohin passt das Teil?');draw();}
     motifs.innerHTML=animals.map((a,i)=>'<button class="bw-motif-button" type="button" data-animal="'+i+'" aria-label="'+a.name+' auswählen"><span aria-hidden="true">'+a.icon+'</span><small>'+a.name+'</small></button>').join('');
@@ -242,5 +255,5 @@
   /* render() resolves puzzle dynamically; scratch is cached in EXTRA_PAGES. */
   puzzle=enhancedPuzzle;
   EXTRA_PAGES.scratch=enhancedScratch;
-  window.bwMiniGamesPlus={version:'2.12.4',gridFor:gridFor,animalCount:animals.length,magicCount:magic.length};
+  window.bwMiniGamesPlus={version:'2.13.0',gridFor:gridFor,animalCount:animals.length,magicCount:magic.length};
 })();

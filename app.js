@@ -31,7 +31,7 @@ function syncImmersive(){
 }
 function toggleImmersive(){immersiveActive=!immersiveActive;store.set('immersive-active',immersiveActive);syncImmersive();}
 
-let activePage='draw', currentCategory='paint', cleanup=[],toastTimer=null,audioCtx=null;
+let activePage='home', currentCategory='paint', cleanup=[],toastTimer=null,audioCtx=null;
 let draftWriteQueue=Promise.resolve();
 function writeDraftInOrder(pic){const task=draftWriteQueue.catch(()=>{}).then(()=>putPic(pic));draftWriteQueue=task.catch(()=>{});return task;}
 
@@ -53,13 +53,13 @@ function route(page,cat){dispose();activePage=page;if(cat)currentCategory=cat;mo
 function heading(title,subtitle){return `<div class="page-intro"><h1>${title}</h1><p>${subtitle}</p></div>`;}
 function topbar(back='home'){
  const focus=ACTIVITY_PAGES.has(activePage)?'<button class="round-btn focus-toggle" id="focus-toggle" aria-label="Spielfläche vergrößern">⛶ Groß</button>':'';
- return `<header class="topbar"><button class="home-link" id="back" aria-label="Zurück"><span class="round-btn" aria-hidden="true">←</span><span>Zurück</span></button><div class="topbar-actions">${focus}<button class="round-btn" id="parent" aria-label="Elternbereich" title="Elternbereich">⚙️</button></div></header>`;
+ return `<header class="topbar"><button class="home-link" id="back" aria-label="Zur Spielauswahl"><span class="round-btn" aria-hidden="true">🏠</span><span>Spielauswahl</span></button><div class="topbar-actions">${focus}<button class="round-btn" id="parent" aria-label="Elternbereich" title="Elternbereich">⚙️</button></div></header>`;
 }
 function wireTop(back='home'){on('back','click',()=>route(back));on('parent','click',openParentGate);on('focus-toggle','click',toggleImmersive);}
 function home(){return v2Home();}
 function category(){return v2Category();}
-function frame(title,subtitle,content,back='category'){
- const immersiveControls=ACTIVITY_PAGES.has(activePage)?'<div class="focus-float"><button id="focus-exit" aria-label="Zurück zur Spielauswahl">← Zurück</button><button id="focus-tool" aria-label="Malwerkzeuge einblenden">⚙ Werkzeuge</button><button id="focus-normal" aria-label="Vollbild ausschalten">↙ Normal</button></div>':'';
+function frame(title,subtitle,content,back='home'){
+ const immersiveControls=ACTIVITY_PAGES.has(activePage)?'<div class="focus-float"><button id="focus-exit" aria-label="Zurück zur Spielauswahl">🏠</button><button id="focus-tool" aria-label="Malwerkzeuge einblenden">⚙ Werkzeuge</button><button id="focus-normal" aria-label="Vollbild ausschalten">↙ Normal</button></div>':'';
  app.innerHTML=topbar()+heading(title,subtitle)+immersiveControls+content;
  wireTop(back);
  on('focus-exit','click',()=>route(back));
@@ -228,3 +228,4 @@ const EXTRA_PAGES={stickers,scratch,music,families};
 function render(){document.body.classList.toggle('child-activity',activePage!=='parents');const pages={home,category,draw,soundboard,color,shapes,puzzle,mix,bubbles,food,animals,garden,stars,gallery,parents,blocks,sort,aquarium,seek,...EXTRA_PAGES};(activePage==='manage-gallery'?manageGallery:pages[activePage]||home)();if(activePage==='parents')v2Parents();syncImmersive();}
 render();
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+

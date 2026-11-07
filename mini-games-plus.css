@@ -39,3 +39,7 @@
   body.focus-mode .bw-magic-stage{min-height:135px;max-height:calc(100dvh - 220px);width:auto;aspect-ratio:90/57}
 }
 @media(prefers-reduced-motion:reduce){.bw-puzzle-piece{transition:none}}
+
+.bw-puzzle-piece.being-dragged{opacity:.35}
+body.focus-mode .bw-puzzle-game, body.focus-mode .bw-magic-game,
+body.focus-mode .coloring-panel, body.focus-mode .sticker-panel {padding-top: 6px}

@@ -91,7 +91,7 @@ body.focus-mode #motif-picker{order:2;flex:none}
 body.focus-mode #motif-picker .chip-row{justify-content:flex-start}
 
 /* Das Malblatt hat an jedem Gerät dieselben vier Farben und zwei Bildaktionen. */
-#studio-parent{pointer-events:auto;display:grid;place-items:center;width:46px;height:46px;padding:0;background:white;color:#74818a}
+#studio-home{pointer-events:auto;display:grid;place-items:center;width:46px;height:46px;padding:0;background:white;color:#74818a}
 .mini-tray,.mini-motifs{position:absolute;z-index:6;display:flex;align-items:center;gap:12px;background:white;border:1px solid #e5e4de;box-shadow:0 4px 18px #36425214;border-radius:32px;padding:8px;bottom:calc(12px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%)}
 .mini-colors{display:flex;gap:10px}
 .mini-colors .v2-color,#studio-motifs,.mini-motifs button{width:clamp(48px,7vw,64px);height:clamp(48px,7vw,64px);min-height:48px;padding:0}
@@ -156,3 +156,48 @@ body.studio-active #app{position:fixed;padding:0}
 #bubble-more{background:#cbeeea;font-size:25px}
 @keyframes bubble-arrive{from{transform:translateY(45%) scale(.65)}}
 @media(prefers-reduced-motion:reduce){.play-bubble::before{animation:none}}
+
+
+/* Gemeinsame Bedienflächen für Spielauswahl, Instrumente und Navigation. */
+:root {
+  --control-size: 52px;
+  --control-radius: 17px;
+  --focus-ring: #344f85;
+  --card-gap: clamp(10px, 2vw, 22px);
+}
+.child-activity button:focus-visible {
+  outline: 4px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.v2-home .v2-cardgrid {
+  gap: var(--card-gap);
+}
+.v2-home .v2-gamecard {
+  min-width: 0;
+  min-height: clamp(132px, 19vh, 184px);
+  border: 1px solid #48576a14;
+  padding: clamp(8px, 1.4vw, 16px);
+  touch-action: pan-y pinch-zoom;
+}
+.v2-home .v2-game-art {min-height: 68px}
+.v2-home .v2-game-art .v2-illustration {width: min(120px, 32vw); height: 78px}
+.v2-home .v2-emoji {font-size: clamp(44px, 8vw, 68px)}
+.v2-home .v2-gamecard strong {font-size: clamp(16px, 2.2vw, 22px)}
+#studio-home, #sound-home, body.focus-mode #focus-exit {
+  display: grid;
+  place-items: center;
+  min-width: var(--control-size);
+  min-height: var(--control-size);
+  background: white;
+  border-radius: var(--control-radius);
+  font-size: 25px;
+  padding: 4px;
+}
+body.focus-mode:not(.studio-active) .focus-float {
+  position: static;
+  flex: 0 0 auto;
+  margin: 0 4px 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .v2-gamecard, .music-key {transition: none}
+}
