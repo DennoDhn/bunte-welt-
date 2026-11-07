@@ -80,7 +80,7 @@ function v2Home(){
  const byId=new Map(ALL_ACTIVITIES.map(a=>[a[0],a]));
  byId.set('music',['music','Xylophon','🎶']);
  byId.set('soundboard',['soundboard','Klangwelt','🔊']);
- const ids=[...new Set(['draw','puzzle','scratch','music','color','soundboard',...chosen,...byId.keys()])];
+ const ids=[...new Set(['puzzle','scratch','music',...chosen,'draw','color','soundboard',...byId.keys()])];
  const resume=store.get('resume-'+v2Profile());
  const cards=ids.filter(id=>byId.has(id)).map((id,i)=>{
    const [,name,emoji]=byId.get(id);
@@ -177,7 +177,7 @@ function v2Draw(options={}){
  const coloringMode=!!options.coloringMode;
  const profile=v2Profile(),draftId=(coloringMode?'coloring-':'')+v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
- const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830']];
+ const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830'],['Hellblau','#86C9F0'],['Mint','#92D8B9'],['Pfirsich','#F1C4A6'],['Ocker','#B77B38'],['Dunkelbraun','#5B392B'],['Weiß','#FFFFFF']];
  const catalog=sheetCatalog();
  let currentMotif=null,undo=null;
  const brushes=[

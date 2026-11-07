@@ -14,7 +14,7 @@
     {name:'Löwe', icon:'🦁', kind:'lion', sky:'#FFF1BF', face:'#F4C070', inner:'#CD8F4B'}
   ];
   function gridFor(parts) { if(parts===2)return [2,1];return parts===9?[3,3]:parts===6?[3,2]:[2,2]; }
-  function defaultParts() { return String(settings.ageBand)==='4'?9:String(settings.ageBand)==='3'?6:2; }
+  function defaultParts() { return String(settings.ageBand)==='4'?9:String(settings.ageBand)==='3'?6:4; }
   function artwork(animal) {
     const k=animal.kind, f=animal.face, e=animal.inner;
     const ears = k==='rabbit'
@@ -74,7 +74,7 @@
     }
     frame('Mein Tier-Puzzle','Tippe auf ein Teil oder ziehe es direkt an die richtige Stelle.',
       '<div class="activity-area bw-puzzle-game">'
-      +'<div class="bw-motif-strip" id="bw-puzzle-motifs" aria-label="Tier aussuchen"></div>'
+      +'<div class="bw-motif-strip" id="bw-puzzle-motifs" aria-label="Puzzlemotiv aussuchen"></div>'
       +'<div class="bw-puzzle-layout">'
       +'<div class="bw-puzzle-board" id="bw-puzzle-board" aria-label="Puzzlefläche"></div>'
       +'<div class="bw-puzzle-pieces" id="bw-puzzle-pieces" aria-label="Puzzleteile"></div></div>'
@@ -224,7 +224,12 @@
       ['haus','🐱','Katze mit Wollknäuel','katze-wollknaeuel'],
       ['hof','🐴','Pony','pferd-pony'],
       ['haus','🐶','Hund mit Knochen','hund-knochen'],
-      ['wald','🐰','Hase mit Karotte','hase-karotte']
+      ['wald','🐰','Hase mit Karotte','hase-karotte'],
+      ['zauber','🦄','Mama und Baby-Einhorn','einhorn-baby'],
+      ['hof','🐄','Kuh','kuh'],
+      ['hof','🐔','Hühner','huehner'],
+      ['hof','🚜','Traktor','traktor'],
+      ['stadt','🚒','Feuerwehrauto','feuerwehrauto']
     ].filter(([world]) => !currentWorld || currentWorld.id === world)
      .map(([,icon,name,file]) => [icon,name,'#fff1dc','#e7efff','✨',null,'motifs/malkiste-'+file+'.png']);
     const magic=[...sheets,...scenes,...(currentWorld?[]:oldMagic)];
