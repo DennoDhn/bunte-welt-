@@ -20,36 +20,48 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p motifs
-          curl --fail --location --silent --show-error --retry 3 --retry-delay 2 \
-            'https://malkiste.eu/bilder/pferd-fohlen.png' -o motifs/malkiste-pferd-fohlen.png
-          curl --fail --location --silent --show-error --retry 3 --retry-delay 2 \
-            'https://malkiste.eu/bilder/einhorn-regenbogen.png' -o motifs/malkiste-einhorn-regenbogen.png
+          for name in pferd-fohlen pferd-pony einhorn-regenbogen einhorn-baby katze-wollknaeuel hund-knochen hase-karotte kuh huehner traktor feuerwehrauto; do
+            curl --fail --location --silent --show-error --retry 3 --retry-delay 2 \
+              "https://malkiste.eu/bilder/${name}.png" -o "motifs/malkiste-${name}.png"
+          done
           python3 - <<'PY'
           import struct
           from pathlib import Path
-          for fn in ('malkiste-pferd-fohlen.png', 'malkiste-einhorn-regenbogen.png'):
-              data=Path('motifs',fn).read_bytes()
-              assert data.startswith(b'\x89PNG\r\n\x1a\n') and len(data)>10000, f'Kein gueltiges PNG: {fn}'
+          expected=["pferd-fohlen","pferd-pony","einhorn-regenbogen","einhorn-baby","katze-wollknaeuel","hund-knochen","hase-karotte","kuh","huehner","traktor","feuerwehrauto"]
+          for name in expected:
+              file = Path('motifs', 'malkiste-' + name + '.png')
+              data = file.read_bytes()
+              assert data.startswith(b'\x89PNG\r\n\x1a\n') and len(data)>10000, f'Invalid PNG: {file}'
               width,height=struct.unpack('>II',data[16:24])
-              assert 400 <= width <= 5000 and 400 <= height <= 5000, f'Unerwartete Groesse: {fn} {width}x{height}'
-              print(f'{fn}: {width}x{height}, {len(data)} bytes')
+              assert 400 <= width <= 5000 and 400 <= height <= 5000, f'Invalid dimensions: {file}'
+              print(f'{name}: {width}x{height}, {len(data)} bytes')
           PY
       - name: Lizenzinformationen sichern
         run: |
           cat > motifs/MALKISTE-CC0.md <<'EOF'
-          # Malkiste-Vorlagen
-          - Pferd mit Fohlen: https://malkiste.eu/pferde/pferd-fohlen/
-          - Einhorn mit Regenbogen: https://malkiste.eu/einhorn/einhorn-regenbogen/
-          - Originale: https://malkiste.eu/bilder/pferd-fohlen.png und https://malkiste.eu/bilder/einhorn-regenbogen.png
-          - Quelle und Lizenz: https://malkiste.eu/ueber/ — CC0 1.0.
-          - Stand: 7. November 2026.
+          # Malkiste-Ausmalvorlagen
+
+          Originale gemeinfreie Motive unter CC0 1.0, Quelle: https://malkiste.eu/ueber/
+          Stand: 7. November 2026. Die lokalen PNG-Dateien sind auch offline verfügbar.
+
+          - pferd-fohlen: https://malkiste.eu/pferde/pferd-fohlen/ (https://malkiste.eu/bilder/pferd-fohlen.png)
+          - pferd-pony: https://malkiste.eu/pferde/pferd-pony/ (https://malkiste.eu/bilder/pferd-pony.png)
+          - einhorn-regenbogen: https://malkiste.eu/einhorn/einhorn-regenbogen/ (https://malkiste.eu/bilder/einhorn-regenbogen.png)
+          - einhorn-baby: https://malkiste.eu/einhorn/einhorn-baby/ (https://malkiste.eu/bilder/einhorn-baby.png)
+          - katze-wollknaeuel: https://malkiste.eu/tiere/katze-wollknaeuel/ (https://malkiste.eu/bilder/katze-wollknaeuel.png)
+          - hund-knochen: https://malkiste.eu/tiere/hund-knochen/ (https://malkiste.eu/bilder/hund-knochen.png)
+          - hase-karotte: https://malkiste.eu/tiere/hase-karotte/ (https://malkiste.eu/bilder/hase-karotte.png)
+          - kuh: https://malkiste.eu/bauernhof/kuh/ (https://malkiste.eu/bilder/kuh.png)
+          - huehner: https://malkiste.eu/bauernhof/huehner/ (https://malkiste.eu/bilder/huehner.png)
+          - traktor: https://malkiste.eu/fahrzeuge/traktor/ (https://malkiste.eu/bilder/traktor.png)
+          - feuerwehrauto: https://malkiste.eu/fahrzeuge/feuerwehrauto/ (https://malkiste.eu/bilder/feuerwehrauto.png)
           EOF
       - name: Bilder ins Repository übernehmen
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add motifs/malkiste-pferd-fohlen.png motifs/malkiste-einhorn-regenbogen.png motifs/MALKISTE-CC0.md
+          git add motifs/malkiste-*.png motifs/MALKISTE-CC0.md
           if ! git diff --cached --quiet; then
-            git commit -m 'Add two CC0 Malkiste horse and unicorn coloring sheets'
+            git commit -m 'Import 11 CC0 Malkiste motifs for offline coloring'
             git push
           fi
