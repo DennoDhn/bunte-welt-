@@ -1,8 +1,8 @@
-/* Bunte Welt 2.13.1 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
+/* Bunte Welt 2.14.0 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
    Ergänzt bestehende Spiele, ohne Galerie oder gespeicherte Malbilder zu ändern. */
 (function () {
   'use strict';
-  const animals = [
+  const legacyAnimals = [
     {name:'Katze', icon:'🐱', kind:'cat', sky:'#E7F3FF', face:'#F4BC88', inner:'#E99699'},
     {name:'Hund', icon:'🐶', kind:'dog', sky:'#FFF0D7', face:'#D8A777', inner:'#B77E65'},
     {name:'Hase', icon:'🐰', kind:'rabbit', sky:'#F4E9FF', face:'#FFF7EF', inner:'#ECA4C8'},
@@ -13,8 +13,8 @@
     {name:'Einhorn', icon:'🦄', kind:'unicorn', sky:'#EDE7FF', face:'#FFFAF2', inner:'#E5AFDF'},
     {name:'Löwe', icon:'🦁', kind:'lion', sky:'#FFF1BF', face:'#F4C070', inner:'#CD8F4B'}
   ];
-  function gridFor(parts) { return parts===9?[3,3]:parts===6?[3,2]:[2,2]; }
-  function defaultParts() { return String(settings.ageBand)==='4'?9:String(settings.ageBand)==='3'?6:4; }
+  function gridFor(parts) { if(parts===2)return [2,1];return parts===9?[3,3]:parts===6?[3,2]:[2,2]; }
+  function defaultParts() { return String(settings.ageBand)==='4'?9:String(settings.ageBand)==='3'?6:2; }
   function artwork(animal) {
     const k=animal.kind, f=animal.face, e=animal.inner;
     const ears = k==='rabbit'
@@ -42,7 +42,7 @@
        +muzzle+'<path d="M30 446Q55 434 78 445M404 445Q429 433 465 446" fill="none" stroke="#70B36B" stroke-width="9" stroke-linecap="round"/>'
        +'</svg>';
   }
-  function pictureUrl(a) { if(a.kind==='unicorn'||a.kind==='horse')return './motifs/'+a.kind+'-color.svg';return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(artwork(a)); }
+  function pictureUrl(a) { if(a.item)return motifUrl(a.item);if(a.kind==='unicorn'||a.kind==='horse')return './motifs/'+a.kind+'-color.svg';return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(artwork(a)); }
   function shuffled(n) {
     const order=Array.from({length:n},(_,i)=>i);
     for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
@@ -50,12 +50,14 @@
     return order;
   }
   function enhancedPuzzle() {
+    const catalog=(currentWorld?[currentWorld]:WORLDS).flatMap(w=>w.items.slice(0,4).map(item=>({name:item.name,icon:item.emoji,kind:item.id,item})));
+    const animals=currentWorld?catalog:[...catalog,...legacyAnimals];
     let chosen=0, parts=defaultParts(), placed=new Set(), selected=null, order=shuffled(parts), drag=null;
-    const progressKey='puzzle-progress-'+v2Profile();
+    const progressKey='puzzle-progress-'+v2Profile()+(currentWorld?'-'+currentWorld.id:'');
     const saved=store.get(progressKey);
     const validIndices=(list,size)=>Array.isArray(list) && list.length<=size &&
       new Set(list).size===list.length && list.every(i=>Number.isInteger(i) && i>=0 && i<size);
-    if(saved && [4,6,9].includes(saved.parts) && saved.age===String(settings.ageBand) &&
+    if(saved && [2,4,6,9].includes(saved.parts) && saved.age===String(settings.ageBand) &&
        animals.some(a=>a.kind===saved.animal) && validIndices(saved.order,saved.parts) &&
        saved.order.length===saved.parts && validIndices(saved.placed,saved.parts)){
       chosen=animals.findIndex(a=>a.kind===saved.animal);
@@ -80,7 +82,7 @@
     const board=document.getElementById('bw-puzzle-board'), tray=document.getElementById('bw-puzzle-pieces');
     const motifs=document.getElementById('bw-puzzle-motifs'), message=document.getElementById('bw-puzzle-message');
     const next=document.getElementById('bw-puzzle-next');
-    function pos(i,cols,rows) {return ((i%cols)/(cols-1)*100)+'% '+(Math.floor(i/cols)/(rows-1)*100)+'%';}
+    function pos(i,cols,rows) {return ((i%cols)/(cols-1)*100)+'% '+(Math.floor(i/cols)/Math.max(1,rows-1)*100)+'%';}
     function say(s) {message.textContent=s;}
     function draw() {
       const [cols,rows]=gridFor(parts),image=pictureUrl(animals[chosen]);
@@ -91,12 +93,18 @@
       board.replaceChildren();tray.replaceChildren();
       const preview=document.createElement('div');
       preview.className='bw-puzzle-preview';preview.style.backgroundImage='url("'+image+'")';
-      board.append(preview);
+      if(parts>2)board.append(preview);
+      const insetImage=i=>pictureUrl(animals[(chosen+i)%animals.length]);
       for(let i=0;i<parts;i++){
         const slot=document.createElement('button');
         slot.type='button';slot.className='bw-puzzle-slot'+(placed.has(i)?' filled':'');
         slot.dataset.slot=String(i);slot.setAttribute('aria-label','Puzzleplatz '+(i+1));
         if(placed.has(i)){slot.style.backgroundImage='url("'+image+'")';slot.style.backgroundSize=(cols*100)+'% '+(rows*100)+'%';slot.style.backgroundPosition=pos(i,cols,rows);}
+        if(parts===2){
+          slot.style.backgroundImage='url("'+insetImage(i)+'")';
+          slot.style.backgroundSize='90% auto';slot.style.backgroundPosition='center';
+          if(!placed.has(i))slot.classList.add('bw-inset-target');
+        }
         slot.addEventListener('click',()=>{if(placed.has(i))return;if(selected===null){say('Such dir ein Teil aus oder ziehe es auf das Bild.');return;}place(selected,i);});
         board.append(slot);
       }
@@ -106,6 +114,9 @@
         p.dataset.piece=String(i);p.disabled=placed.has(i);p.setAttribute('aria-label','Puzzleteil '+(i+1));
         p.style.aspectRatio=String(rows)+' / '+String(cols);
         p.style.backgroundImage='url("'+image+'")';p.style.backgroundSize=(cols*100)+'% '+(rows*100)+'%';p.style.backgroundPosition=pos(i,cols,rows);
+        if(parts===2){
+          p.style.backgroundImage='url("'+insetImage(i)+'")';p.style.backgroundSize='90% auto';p.style.backgroundPosition='center';p.style.aspectRatio='1';
+        }
         p.addEventListener('click',ev=>{if(ev.detail===0 && !drag){selected=i;beep('pop');draw();}});
         enableDrag(p,i);tray.append(p);
       }
@@ -161,7 +172,10 @@
         const moved=!!drag.ghost || Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)>=8;
         endDrag();
         if(!moved){selected=index;beep('pop');draw();return;}
-        const slot=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]');
+        let slot=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]');
+        const right=board.querySelector('[data-slot="'+index+'"]'),r=right.getBoundingClientRect();
+        const distance=Math.hypot(Math.max(r.left-ev.clientX,0,ev.clientX-r.right),Math.max(r.top-ev.clientY,0,ev.clientY-r.bottom));
+        if(distance<=Math.min(r.width,r.height)*.12)slot=right;
         if(slot && board.contains(slot)){place(index,Number(slot.dataset.slot));return;}
         say('Versuch es noch einmal.');
       });
@@ -174,18 +188,19 @@
     motifs.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{chosen=Number(b.dataset.animal);reset();}));
     on('bw-puzzle-reset','click',reset);
     on('bw-puzzle-next','click',()=>{chosen=(chosen+1)%animals.length;reset();});
-    on('bw-puzzle-level','click',()=>{parts=parts===4?6:parts===6?9:4;reset();});
+    on('bw-puzzle-level','click',()=>{parts=parts===2?4:parts===4?6:parts===6?9:2;reset();});
     on('bw-puzzle-help','click',()=>{
       if(placed.size===parts)return;
       const first=selected!==null&&!placed.has(selected)?selected:order.find(i=>!placed.has(i));
-      if(first!==undefined)place(first,first);
+      if(first!==undefined){selected=first;draw();board.querySelector('[data-slot="'+first+'"]').classList.add('bw-hint');say('Hier passt dein Teil hinein.');}
     });
     if(placed.size===parts)say('Hurra! '+animals[chosen].name+' ist fertig!');
     else if(placed.size)say('Hier kannst du weiterpuzzeln.');
+    document.getElementById('bw-puzzle-help').hidden=!store.get('world-help-'+v2Profile(),true);
     draw();
   }
 
-  const magic=[
+  const oldMagic=[
     ['🐱','Katze','#FFEAD6','#FFD0E3'],['🌈','Regenbogen','#D9F0FF','#FFF0B8'],
     ['🦋','Schmetterling','#FBE5FA','#E8E4FF'],['🐻','Bär','#E8F4DE','#FEE5C9'],
     ['🚀','Rakete','#E8E4FF','#CBE8F9'],['🦄','Einhorn','#F6E4FA','#DCEBFF'],
@@ -194,6 +209,10 @@
     ['🚜','Traktor','#E8F4DB','#FCE9C6'],['🐧','Pinguin','#D9EAF9','#F3F5FF']
   ];
   function enhancedScratch(){
+    const scenes=(currentWorld?[currentWorld]:WORLDS).flatMap(w=>[w.id==='hof'?2:w.id==='wald'?1:0,w.id==='hof'?0:w.id==='wald'?0:1,3].map((index,i)=>{
+      const m=w.items[index];return [m.emoji,m.name,w.bg,'#fff6d8',w.covers[i],m];
+    }));
+    const magic=currentWorld?scenes:[...scenes,...oldMagic];
     let selected=0,pointer=null,last=null,completed=false,moves=0;
     frame('Zauberbilder','Wische mit dem Finger und entdecke die Überraschung.',
       '<div class="activity-area scratch-wrap bw-magic-game">'
@@ -217,12 +236,19 @@
         b.fillStyle=i%2?'#FFFFFF88':'#FDF6C688';b.beginPath();b.arc(x,y,9+i%4*5,0,Math.PI*2);b.fill();}
       b.textAlign='center';b.textBaseline='middle';
       b.font='310px "Apple Color Emoji","Segoe UI Emoji",sans-serif';b.fillText(emoji,450,268);
+      if(magic[selected][5]){
+        const scene=selected,img=new Image();img.onload=()=>{if(!back.isConnected||selected!==scene)return;b.fillStyle=gradient;b.fillRect(200,48,500,420);b.drawImage(img,245,65,410,410)};img.src=motifUrl(magic[selected][5]);
+      }
       b.font='bold 48px ui-rounded,system-ui,sans-serif';b.fillStyle='#50617A';b.fillText(name,450,514);
       c.globalCompositeOperation='source-over';c.clearRect(0,0,900,570);
       const layer=c.createLinearGradient(0,0,900,570);layer.addColorStop(0,'#AAA9E7');layer.addColorStop(1,'#90C9DB');
       c.fillStyle=layer;c.fillRect(0,0,900,570);
       for(let x=35;x<900;x+=123)for(let y=38;y<570;y+=100){
         c.fillStyle=((x+y)%2)?'#FFFFFF77':'#F7ECFF88';c.beginPath();c.arc(x,y,13,0,Math.PI*2);c.fill();
+      }
+      if(magic[selected][4]){
+        c.font='70px system-ui';c.textAlign='center';
+        for(let row=0;row<4;row++)for(let col=0;col<6;col++)c.fillText(magic[selected][4],65+col*155+(row%2)*22,85+row*145);
       }
       c.globalCompositeOperation='destination-out';c.lineCap='round';c.lineJoin='round';c.lineWidth=String(settings.ageBand)==='2'?155:125;
       msg.textContent='Wisch mit dem Finger!';document.getElementById('bw-magic-reveal').hidden=false;refreshTabs();
@@ -239,7 +265,7 @@
     }
     function uncover(){
       if(completed)return;
-      completed=true;c.clearRect(0,0,900,570);
+      completed=true;if(worldMotion())back.animate?.([{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:440});c.clearRect(0,0,900,570);
       msg.textContent='Hurra! Das ist '+magic[selected][1]+'!';document.getElementById('bw-magic-reveal').hidden=true;beep();
     }
     function inspectProgress(){
@@ -272,5 +298,5 @@
   /* render() resolves puzzle dynamically; scratch is cached in EXTRA_PAGES. */
   puzzle=enhancedPuzzle;
   EXTRA_PAGES.scratch=enhancedScratch;
-  window.bwMiniGamesPlus={version:'2.13.1',gridFor:gridFor,animalCount:animals.length,magicCount:magic.length};
+  window.bwMiniGamesPlus={version:'2.14.0',gridFor:gridFor,animalCount:legacyAnimals.length+24,magicCount:oldMagic.length+18};
 })();

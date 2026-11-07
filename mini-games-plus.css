@@ -43,3 +43,5 @@
 .bw-puzzle-piece.being-dragged{opacity:.35}
 body.focus-mode .bw-puzzle-game, body.focus-mode .bw-magic-game,
 body.focus-mode .coloring-panel, body.focus-mode .sticker-panel {padding-top: 6px}
+.bw-puzzle-slot.bw-inset-target{filter:grayscale(1);opacity:.29}
+.bw-puzzle-slot.bw-hint{opacity:1;outline:5px dashed #426381;outline-offset:-6px}

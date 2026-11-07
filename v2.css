@@ -201,3 +201,9 @@ body.focus-mode:not(.studio-active) .focus-float {
 @media (prefers-reduced-motion: reduce) {
   .v2-gamecard, .music-key {transition: none}
 }
+
+.world-section{margin:28px 0}.world-grid,.world-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(145px,44%),1fr));gap:14px}
+.world-grid button,.world-options button,#world-task button{display:grid;place-items:center;gap:4px;background:var(--paper,#f4eddf);border-radius:22px;min-height:104px;padding:12px;color:#344559}
+.world-grid svg,.world-grid button>span{width:80px;height:72px;font-size:50px}.world-stage{background:var(--paper);border-radius:25px;padding:18px;text-align:center;overflow:auto}.world-options{max-width:600px;margin:auto}.world-options button{background:white;font-size:46px}.world-options svg,#world-task svg{width:100px;height:100px}.world-options .selected,.world-options .matched{outline:4px solid #557fa0}
+#world-task{display:grid;place-items:center;min-height:100px;font-size:clamp(32px,7vw,62px);margin:10px auto}.silhouette svg{filter:brightness(0) opacity(.7)}#world-task .trail{width:min(65vh,100%);height:auto;touch-action:none}.world-stage [hidden]{display:none}.world-credit{display:block;margin:24px;line-height:1.6}.instrument-choices{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}.instrument-choices button,#world-resume{padding:10px 13px;min-height:46px;border-radius:14px}.instrument-choices [aria-pressed=true]{background:#c6dfd0}#templates{max-height:35vh;overflow:auto}#templates button{touch-action:pan-y}#world-resume{margin-top:18px}.world-grid button,.world-section button{touch-action:pan-y!important}
+#world-task{position:relative;z-index:1}

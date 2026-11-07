@@ -19,6 +19,7 @@ const store={
 let settings=Object.assign({sound:true,quiet:false,easy:true,childName:'',ageBand:'2',theme:'sun',fullscreenDefault:true,favorites:['draw','stickers','bubbles','animals']},store.get('settings',{}));
 const ACTIVITY_PAGES=new Set(['draw','color','shapes','puzzle','mix','bubbles','food','animals','garden','stars','stickers','scratch','families','music']);
 ['blocks','sort','aquarium','seek'].forEach(id=>ACTIVITY_PAGES.add(id));
+for(const [id] of WORLD_GAMES)ACTIVITY_PAGES.add(id);
 let immersiveActive=store.get('immersive-active',settings.fullscreenDefault);
 function applyTheme(){document.body.dataset.theme=['sun','mint','ocean'].includes(settings.theme)?settings.theme:'sun';}
 applyTheme();
@@ -49,7 +50,7 @@ function beep(kind='happy'){
 }
 function speak(text){if(!settings.sound||settings.quiet||!('speechSynthesis' in window))return;try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='de-DE';u.rate=.85;u.pitch=1.1;window.speechSynthesis.speak(u);}catch{}}
 function dispose(){cleanup.splice(0).forEach(fn=>{try{fn();}catch{}});try{window.speechSynthesis?.cancel();}catch{}}
-function route(page,cat){dispose();activePage=page;if(cat)currentCategory=cat;modalRoot.replaceChildren();render();window.scrollTo(0,0);}
+function route(page,cat){dispose();if(page==='home')currentWorld=null;if(['draw','color','puzzle'].includes(page))store.set('resume-'+v2Profile(),{page,world:currentWorld?.id||null});activePage=page;if(cat)currentCategory=cat;modalRoot.replaceChildren();render();window.scrollTo(0,0);}
 function heading(title,subtitle){return `<div class="page-intro"><h1>${title}</h1><p>${subtitle}</p></div>`;}
 function topbar(back='home'){
  const focus=ACTIVITY_PAGES.has(activePage)?'<button class="round-btn focus-toggle" id="focus-toggle" aria-label="Spielfläche vergrößern">⛶ Groß</button>':'';
@@ -106,6 +107,10 @@ function draw(){return v2Draw();}
 /* Tap-to-fill SVG-Ausmalbilder */
 function part(tag,attrs,key,state){const fill=/^#[0-9a-f]{6}$/i.test(state[key])?state[key]:'#ffffff';return `<${tag} ${attrs} data-colorpart="${key}" fill="${fill}" stroke="#55647A" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" />`;}
 function templateSvg(which,state){
+ const alias={horse:'m-1f40e',unicorn:'m-1f984'};
+ const id=Object.hasOwn(alias,which)&&!Object.keys(state).some(k=>!/^\d+$/.test(k))?alias[which]:which;
+ const item=WORLDS.flatMap(w=>w.items).find(m=>m.id===id);
+ if(item)return motifSvg(item,state).replace('<svg ','<svg id="color-svg" ');
  if((which==='horse'||which==='unicorn')&&window.bwHorseUnicornColoring)return window.bwHorseUnicornColoring(which,state);
  const bg=`<rect x="0" y="0" width="720" height="480" rx="28" fill="#ffffff"/>`;
  let s='';
@@ -123,17 +128,19 @@ function templateSvg(which,state){
 }
 function color(){
  const templates=[['fish','🐠 Fisch'],['flower','🌼 Blume'],['house','🏠 Haus'],['butterfly','🦋 Schmetterling'],['car','🚗 Auto'],['balloons','🎈 Ballons'],['sun','☀️ Sonne'],['tree','🌳 Baum'],['cat','🐱 Katze'],['rocket','🚀 Rakete'],['horse','🐴 Pferd'],['unicorn','🦄 Einhorn']];
- let which=store.get('selected-template','fish');if(!templates.some(t=>t[0]===which))which='fish';
+ const collection=WORLDS.flatMap(w=>w.items);templates.unshift(...collection.map(m=>[m.id,m.emoji+' '+m.name]));
+ let which=requestedMotif||store.get('selected-template',collection[0].id);requestedMotif=null;store.set('selected-template',which);const undo=[];if(!templates.some(t=>t[0]===which))which='fish';
  const selected={value:COLORS[0][1]};
  const profile=v2Profile();
  const stateKey=()=>profile==='main'?'coloring-'+which:'coloring-'+profile+'-'+which;
  function state(){return store.get(stateKey(),{});}
- frame('Buntes Ausmalen','Tippe erst auf eine Farbe und dann auf das Bild.',`<div class="panel coloring-panel"><details id="motif-picker"><summary><span aria-hidden="true">📖</span> Bild aussuchen</summary><div class="chip-row" id="templates">${templates.map(([id,title])=>`<button class="chip ${which===id?'active':''}" data-template="${id}" aria-label="${title}"><span aria-hidden="true">${title.split(' ')[0]}</span> ${title.split(' ')[1]}</button>`).join('')}</div></details><div class="paint-tools">${palette(selected.value)}</div><div class="coloring-surface" id="coloring-surface">${templateSvg(which,state())}</div><div class="toolbar" style="margin-top:17px"><button class="tool-btn soft" id="reset-coloring">🧽 Farben entfernen</button><button class="tool-btn primary" id="save-coloring">💛 In meine Bilder</button></div></div>`);
+ frame('Buntes Ausmalen','Tippe erst auf eine Farbe und dann auf das Bild.',`<div class="panel coloring-panel"><details id="motif-picker"><summary><span aria-hidden="true">📖</span> Bild aussuchen</summary><div class="chip-row" id="templates">${templates.map(([id,title])=>`<button class="chip ${which===id?'active':''}" data-template="${id}" aria-label="${title}"><span aria-hidden="true">${title.split(' ')[0]}</span> ${title.split(' ')[1]}</button>`).join('')}</div></details><div class="paint-tools">${palette(selected.value)}</div><div class="coloring-surface" id="coloring-surface">${templateSvg(which,state())}</div><div class="toolbar" style="margin-top:17px"><button class="tool-btn" id="undo-color" disabled>↶ Rückgängig</button><button class="tool-btn soft" id="reset-coloring">🧽 Farben entfernen</button><button class="tool-btn primary" id="save-coloring">💛 In meine Bilder</button></div></div>`);
  bindPalette(selected);const surf=document.getElementById('coloring-surface');
  function refresh(){surf.innerHTML=templateSvg(which,state());app.querySelectorAll('[data-template]').forEach(b=>b.classList.toggle('active',b.dataset.template===which));}
- surf.addEventListener('click',e=>{let el=e.target.closest('[data-colorpart]');if(!el)return;let s=state();s[el.dataset.colorpart]=selected.value;store.set(stateKey(),s);el.setAttribute('fill',selected.value);beep('pop');});
- app.querySelectorAll('[data-template]').forEach(b=>b.addEventListener('click',()=>{which=b.dataset.template;store.set('selected-template',which);document.getElementById('motif-picker').open=false;refresh();}));
- on('reset-coloring','click',()=>confirmBox('Farben entfernen?','Dieses Ausmalbild wird wieder weiß. In der Galerie gespeicherte Bilder bleiben erhalten.','Ja, zurücksetzen',()=>{store.set(stateKey(),{});refresh();}));
+ surf.addEventListener('click',e=>{let el=e.target.closest('[data-colorpart]');if(!el)return;let s=state();undo.push({...s});if(undo.length>50)undo.shift();document.getElementById('undo-color').disabled=false;s[el.dataset.colorpart]=selected.value;store.set(stateKey(),s);el.setAttribute('fill',selected.value);beep('pop');});
+ app.querySelectorAll('[data-template]').forEach(b=>b.addEventListener('click',()=>{undo.length=0;document.getElementById('undo-color').disabled=true;which=b.dataset.template;store.set('selected-template',which);document.getElementById('motif-picker').open=false;refresh();}));
+ on('undo-color','click',e=>{if(undo.length){store.set(stateKey(),undo.pop());refresh()}e.currentTarget.disabled=!undo.length;});
+ on('reset-coloring','click',()=>confirmBox('Farben entfernen?','Dieses Ausmalbild wird wieder weiß. In der Galerie gespeicherte Bilder bleiben erhalten.','Ja, zurücksetzen',()=>{undo.push(state());document.getElementById('undo-color').disabled=false;store.set(stateKey(),{});refresh();}));
  on('save-coloring','click',()=>{const svg=document.getElementById('color-svg').cloneNode(true);svg.setAttribute('width','1200');svg.setAttribute('height','800');const data='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(svg));const image=new Image();image.onload=()=>{let c=document.createElement('canvas');c.width=1200;c.height=800;let x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,1200,800);x.drawImage(image,0,0,1200,800);saveToGallery(c.toDataURL('image/png'),'Mein Ausmalbild');};image.onerror=()=>toast('Bild konnte nicht gespeichert werden.');image.src=data;});
 }
 
@@ -224,7 +231,7 @@ function parents(){frame('Elternbereich','Einstellungen und Schutzfunktionen fü
  on('parent-delete','click',()=>confirmBox('Alle Galerie-Bilder löschen?','Diese Aktion kann nicht rückgängig gemacht werden. Dein aktueller Mal-Entwurf bleibt erhalten.','Bilder löschen',async()=>{try{let pics=(await allPics()).filter(x=>x.type==='gallery');await Promise.all(pics.map(p=>delPic(p.id)));toast('Galerie wurde geleert.');}catch{toast('Löschen fehlgeschlagen.');}}));
  on('change-pin','click',()=>{modalRoot.innerHTML=`<div class="modal-backdrop"><form class="dialog" id="change-pin-form" role="dialog" aria-modal="true"><h2>Eltern-PIN ändern</h2><p>Gib deine neue vierstellige PIN zweimal ein.</p><input id="change-a" type="password" pattern="[0-9]{4}" maxlength="4" inputmode="numeric" placeholder="Neue PIN" required/><input id="change-b" type="password" pattern="[0-9]{4}" maxlength="4" inputmode="numeric" placeholder="PIN wiederholen" required/><div class="err" id="change-error"></div><div class="dialog-actions"><button class="tool-btn" type="button" id="change-cancel">Abbrechen</button><button class="tool-btn primary" type="submit">Ändern</button></div></form></div>`;on('change-cancel','click',()=>modalRoot.replaceChildren());on('change-pin-form','submit',e=>{e.preventDefault();let a=document.getElementById('change-a').value,b=document.getElementById('change-b').value;if(!/^\d{4}$/.test(a)||a!==b){document.getElementById('change-error').textContent='PINs stimmen nicht überein.';return;}store.set('parent-pin',a);modalRoot.replaceChildren();toast('PIN geändert.');});});
 }
-const EXTRA_PAGES={stickers,scratch,music,families};
+const EXTRA_PAGES={stickers,scratch,music,families,world:worldMenu,worldcolor:worldMotifs,worldsound:playWorld,...Object.fromEntries(WORLD_GAMES.map(([id])=>[id,playWorld]))};
 function render(){document.body.classList.toggle('child-activity',activePage!=='parents');const pages={home,category,draw,soundboard,color,shapes,puzzle,mix,bubbles,food,animals,garden,stars,gallery,parents,blocks,sort,aquarium,seek,...EXTRA_PAGES};(activePage==='manage-gallery'?manageGallery:pages[activePage]||home)();if(activePage==='parents')v2Parents();syncImmersive();}
 render();
 if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}

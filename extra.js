@@ -7,8 +7,9 @@ const STICKER_SETS={
   meer:{label:'🌊 Unterwasser',items:['🐠','🐟','🐬','🐢','🐙','🦀','🐚','🪸','⭐','🫧','🐡','🦈']},
   himmel:{label:'☁️ Wolkenwelt',items:['🦄','🌈','☀️','🌙','⭐','🚀','🎈','🪁','🛩️','🐦','🦋','💖']}
 };
+for(const w of WORLDS)STICKER_SETS['welt-'+w.id]={label:w.icon+' '+w.name,items:w.items.map(m=>m.emoji)};
 function stickers(){
- let theme=store.get('sticker-theme','wiese');if(!STICKER_SETS[theme])theme='wiese';
+ let theme=currentWorld?'welt-'+currentWorld.id:store.get('sticker-theme','wiese');if(!STICKER_SETS[theme])theme='wiese';
  const states={};for(const id of Object.keys(STICKER_SETS)){const saved=store.get('sticker-'+id,[]);states[id]=Array.isArray(saved)?saved.filter(v=>v&&typeof v.emoji==='string'&&Number.isFinite(v.x)&&Number.isFinite(v.y)).slice(0,70):[];}
  frame('Mein Stickerbuch','Wähle Bilder aus, verschiebe sie mit dem Finger und gestalte deine Welt.',`<div class="panel sticker-panel"><div class="sticker-tabs" id="sticker-tabs">${Object.entries(STICKER_SETS).map(([id,v])=>`<button class="chip ${id===theme?'active':''}" data-theme="${id}">${v.label}</button>`).join('')}</div><div class="sticker-stage"><canvas id="sticker-canvas" width="1100" height="700" aria-label="Stickerbild, Sticker mit dem Finger bewegen"></canvas></div><div class="sticker-palette" id="sticker-palette" aria-label="Sticker wählen"></div><div class="toolbar sticker-actions"><button class="tool-btn soft" id="sticker-undo">↶ Rückgängig</button><button class="tool-btn soft" id="sticker-clear">🧽 Neues Bild</button><button class="tool-btn primary" id="sticker-save">💛 Bild speichern</button></div></div>`);
  const canvas=document.getElementById('sticker-canvas'),ctx=canvas.getContext('2d'),stickerChoices=document.getElementById('sticker-palette');
@@ -16,6 +17,8 @@ function stickers(){
  const items=()=>states[theme];
  const persist=()=>store.set('sticker-'+theme,items());
  function background(){
+  const w=WORLDS.find(w=>'welt-'+w.id===theme);
+  if(w){ctx.fillStyle=w.bg;ctx.fillRect(0,0,1100,700);ctx.fillStyle=['#b8cd8c','#e1bda5','#92be98','#8bcedf','#bdb8ae','#d3bce0'][WORLDS.indexOf(w)];ctx.beginPath();ctx.moveTo(0,450);ctx.quadraticCurveTo(400,330,1100,510);ctx.lineTo(1100,700);ctx.lineTo(0,700);ctx.fill();ctx.font='110px system-ui';ctx.textAlign='center';ctx.fillText(w.icon,180,370);ctx.fillText(w.items[8].emoji,940,465);return}
   const grad=ctx.createLinearGradient(0,0,0,700);
   if(theme==='meer'){grad.addColorStop(0,'#b4efff');grad.addColorStop(1,'#d0e8fa');}
   else if(theme==='himmel'){grad.addColorStop(0,'#b2dafa');grad.addColorStop(1,'#f9e3ee');}
@@ -64,9 +67,16 @@ function scratch(){
 
 function music(){
  const notes=[['Do',261.63,'#f57f83'],['Re',293.66,'#fab16a'],['Mi',329.63,'#f6d46d'],['Fa',349.23,'#96cf8b'],['Sol',392,'#8dd1da'],['La',440,'#8aadec'],['Si',493.88,'#bca0ef'],['Do',523.25,'#eba0c7']];
- frame('Meine Musik-Ecke','Tippe auf die bunten Töne und erfinde deine eigene Musik.',`<div class="activity-area music-stage"><div class="instrument-panel"><h2>🎹 Mein Xylophon</h2><div class="music-keys">${notes.map(([name,hz,color],i)=>`<button class="music-key" data-note="${i}" aria-label="Ton ${name}" style="background:${color};height:${155+(7-i)*8}px"><span>${name}</span></button>`).join('')}</div></div><div class="music-percussion"><button data-percussion="drum" aria-label="Trommel spielen">🥁<span>Trommel</span></button><button data-percussion="bell" aria-label="Glöckchen spielen">🔔<span>Glöckchen</span></button><button data-percussion="shake" aria-label="Rassel spielen">🪇<span>Rassel</span></button></div></div>`);
+ frame('Meine Musik-Ecke','Tippe auf die bunten Töne und erfinde deine eigene Musik.',`<div class="activity-area music-stage"><div class="instrument-panel"><div class="instrument-choices"><button data-instrument="wood">🎹 Xylophon</button><button data-instrument="bell">🔔 Glockenspiel</button><button data-instrument="drum">🥁 Trommel</button><button id="melody">🎼 Nachspielen</button></div><div class="music-keys">${notes.map(([name,hz,color],i)=>`<button class="music-key" data-note="${i}" aria-label="Ton ${name}" style="background:${color};height:${155+(7-i)*8}px"><span>${name}</span></button>`).join('')}</div></div><div class="music-percussion"><button data-percussion="drum" aria-label="Trommel spielen">🥁<span>Trommel</span></button><button data-percussion="bell" aria-label="Glöckchen spielen">🔔<span>Glöckchen</span></button><button data-percussion="shake" aria-label="Rassel spielen">🪇<span>Rassel</span></button></div></div>`);
  async function tone(hz,type='sine',length=.5){if(!settings.sound||settings.quiet){toast('Ton im Elternbereich ausgeschaltet.');return;}try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state!=='running')await audioCtx.resume();if(activePage!=='music')return;const t=audioCtx.currentTime;const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=type;osc.frequency.value=hz;gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.09,t+.015);gain.gain.exponentialRampToValueAtTime(.0001,t+length);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(t);osc.stop(t+length+.04);}catch{toast('Ton konnte nicht starten. Tippe noch einmal.');}}
- document.querySelectorAll('[data-note]').forEach(el=>el.addEventListener('click',()=>{const n=Number(el.dataset.note);tone(notes[n][1]);el.classList.add('played');const t=setTimeout(()=>el.classList.remove('played'),160);cleanup.push(()=>clearTimeout(t));}));
+ let instrument='wood',pattern=[],step=0;
+ const keys=[...document.querySelectorAll('[data-note]')];
+ function note(i){tone(instrument==='drum'?65+i*10:notes[i][1]*(instrument==='bell'?2:1),instrument==='drum'?'triangle':'sine',instrument==='bell'?.9:instrument==='drum'?.15:.45)}
+ function light(i){keys[i].animate?.([{filter:'brightness(1.6)',transform:'scale(.95)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:450})}
+ let melodyTimer=null;cleanup.push(()=>clearTimeout(melodyTimer));
+ document.querySelectorAll('[data-instrument]').forEach(b=>b.onclick=()=>{instrument=b.dataset.instrument;document.querySelectorAll('[data-instrument]').forEach(el=>el.setAttribute('aria-pressed',String(el===b)));note(0)});
+ on('melody','click',()=>{clearTimeout(melodyTimer);pattern=[Math.floor(Math.random()*4),4+Math.floor(Math.random()*4)];step=0;note(pattern[0]);light(pattern[0]);melodyTimer=setTimeout(()=>{if(pattern.length){note(pattern[1]);light(pattern[1])}},600)});
+ document.querySelectorAll('[data-note]').forEach(el=>el.addEventListener('click',()=>{const n=Number(el.dataset.note);note(n);if(pattern.length){if(n===pattern[step]){if(++step===2){pattern=[];toast('Genau so!')}}else{light(pattern[step])}}el.classList.add('played');const t=setTimeout(()=>el.classList.remove('played'),160);cleanup.push(()=>clearTimeout(t));}));
  document.querySelectorAll('[data-percussion]').forEach(el=>el.addEventListener('click',()=>{const kind=el.dataset.percussion;if(kind==='bell')tone(830,'sine',1);else if(kind==='drum')tone(100,'triangle',.2);else{tone(430,'sawtooth',.12);setTimeout(()=>{if(activePage==='music')tone(510,'sawtooth',.12);},130);}el.classList.add('played');setTimeout(()=>el.classList.remove('played'),160);}));
 }
 

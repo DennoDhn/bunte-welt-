@@ -39,7 +39,8 @@ function worldMotifs(){
  app.querySelectorAll('[data-motif]').forEach(b=>b.onclick=()=>{requestedMotif=b.dataset.motif;route('color')});
 }
 function colorKey(id){return v2Profile()==='main'?'coloring-'+id:'coloring-'+v2Profile()+'-'+id;}
-function worldCredit(){return '<small class="world-credit">Motivgrafiken: Twemoji, © Twitter, Inc. und Mitwirkende, fortgeführt von jdecked/twemoji. Quelle: github.com/jdecked/twemoji · CC BY 4.0 (creativecommons.org/licenses/by/4.0/). Für Ausmalflächen und Spiele bearbeitet.</small>';}
+function worldMotion(){return store.get('world-motion-'+v2Profile(),true)&&!matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function worldCredit(){return '<small class="world-credit">Motivgrafiken: Twemoji, © Twitter, Inc. und Mitwirkende, fortgeführt von jdecked/twemoji. <a href="https://github.com/jdecked/twemoji">Grafikquelle</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Für Ausmalflächen und Spiele bearbeitet.</small>';}
 const WORLD_SOUNDS=[
  [['bird','🐦','Vogel'],['bee','🐝','Biene'],['water','💧','Wasser']],
  [['cat','🐈','Katze'],['bell','🔔','Glöckchen'],['bird','🦜','Vogel']],
@@ -70,16 +71,34 @@ function playWorld(){
  const name= WORLD_GAMES.find(row=>row[0]===game)?.[1]||'Klangwelt';
  frame(name,w.name,'<section class="world-stage" style="--paper:'+w.bg+'"><div id="world-task"></div><div class="world-options" id="world-options"></div><p id="world-result" role="status"></p><button class="big-btn primary" id="world-next" hidden>Weiter ➜</button></section>');
  const task=document.getElementById('world-task'),opts=document.getElementById('world-options'),msg=document.getElementById('world-result'),next=document.getElementById('world-next');
- let round=0;
+ let round=0,pairTimer=null;cleanup.push(()=>clearTimeout(pairTimer));
  function option(html,label,action){
   const b=document.createElement('button');b.innerHTML=html;b.setAttribute('aria-label',label);b.onclick=()=>action(b);opts.append(b);return b;
  }
  function won(text='Das passt!'){msg.textContent=text;next.hidden=false;beep();}
+ function allowDrag(){
+  let drag=null;
+  task.style.touchAction='none';task.style.cursor='grab';
+  task.onpointerdown=e=>{
+    if(drag||e.button!==0||!next.hidden)return;
+    task.setPointerCapture(e.pointerId);drag={id:e.pointerId,x:e.clientX,y:e.clientY};
+  };
+  task.onpointermove=e=>{if(drag?.id===e.pointerId)task.style.transform='translate('+ (e.clientX-drag.x)+'px,'+(e.clientY-drag.y)+'px)';};
+  function finish(e){
+    if(drag?.id!==e.pointerId)return;
+    drag=null;task.style.transform='';
+    if(e.type==='pointerup'){
+      const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('#world-options button');
+      if(target)target.click();
+    }
+  }
+  task.onpointerup=task.onpointercancel=task.onlostpointercapture=finish;
+ }
  function choices(entries,correct,onWin){
   const mixed=entries.slice();for(let i=mixed.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[mixed[i],mixed[j]]=[mixed[j],mixed[i]];}
   for(const [id,art,label] of mixed)option(art,label,b=>{
    if(!next.hidden)return;
-   if(id===correct){b.classList.add('matched');onWin()}else{msg.textContent='Probier ein anderes Bild.';b.animate?.([{opacity:.55},{opacity:1}],{duration:220})}
+   if(id===correct){b.classList.add('matched');onWin()}else{msg.textContent='Probier ein anderes Bild.';if(worldMotion())b.animate?.([{opacity:.55},{opacity:1}],{duration:220})}
   });
  }
  const scenes=[
@@ -107,7 +126,7 @@ function playWorld(){
   }
   if(game==='shadow'){
    task.innerHTML='<div class="silhouette">'+motifSvg(item)+'</div>';
-   choices([item,other].map(m=>[m.id,motifSvg(m),m.name]),item.id,()=>{task.innerHTML=motifSvg(item);won()});return;
+   allowDrag();choices([item,other].map(m=>[m.id,motifSvg(m),m.name]),item.id,()=>{task.innerHTML=motifSvg(item);won()});return;
   }
   if(game==='eargame'){
    const answer=sounds[round%sounds.length];
@@ -116,7 +135,7 @@ function playWorld(){
   }
   if(game==='together'){
    const [icon,yes,no,result]=scenes[index][round%2];task.textContent=icon;
-   choices([[yes,yes,yes],[no,no,no]],yes,()=>{task.textContent=icon+' '+yes;won(result)});return;
+   allowDrag();choices([[yes,yes,yes],[no,no,no]],yes,()=>{task.textContent=icon+' '+yes;if(worldMotion())task.animate?.([{transform:'translateX(-12px)'},{transform:'translateX(12px)'},{transform:'translateX(0)'}],{duration:550});won(result)});return;
   }
   if(game==='story'){
    const story=stories[index];let step=0;const advance=()=>{
@@ -131,15 +150,15 @@ function playWorld(){
   }
   if(game==='pairs'){
    task.textContent='Finde zwei gleiche Bilder';let first=null,matched=0;
-   const covered=round%2===1;
+   const covered=round%2===1;let comparing=false;
    const cards=[item,other,item,other];for(let i=3;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]]}
    for(const m of cards)option(covered?'❔':motifSvg(m),covered?'Karte aufdecken':m.name,b=>{
-    if(first?.button===b)return;
+    if(comparing||first?.button===b)return;
     b.innerHTML=motifSvg(m);b.classList.add('selected');
     if(!first){first={button:b,id:m.id};return}
     const previous=first;first=null;
     if(previous.id===m.id){previous.button.disabled=b.disabled=true;matched++;if(matched===2)won('Beide Paare gefunden!')}
-    else{msg.textContent='Schau noch einmal.';for(const c of [previous.button,b]){c.classList.remove('selected');if(covered)c.innerHTML='❔'}}
+    else{msg.textContent='Schau noch einmal.';comparing=true;pairTimer=setTimeout(()=>{for(const c of [previous.button,b]){c.classList.remove('selected');if(covered)c.innerHTML='❔'}comparing=false;},650)}
    });return;
   }
   if(game==='trail'){

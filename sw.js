@@ -1,7 +1,8 @@
-/* Meine bunte Welt – Offline-Shell v2.13.1 */
-const CACHE = 'bunte-welt-v2.13.1';
+/* Meine bunte Welt – Offline-Shell v2.14.0 */
+const CACHE = 'bunte-welt-v2.14.0';
 const ASSETS = [
-  './gestures.js?v=2.13.1', './phone.css?v=2.13.1', './', './index.html', './style.css?v=2.13.1', './v2.css?v=2.13.1', './extra.js?v=2.13.1', './v2.js?v=2.13.1', './soundboard.js?v=2.13.1', './app.js?v=2.13.1', './horse-unicorn-coloring.js?v=2.13.1', './mini-games-plus.js?v=2.13.1', './mini-games-plus.css?v=2.13.1',
+  './worlds.js?v=2.14.0', './worlds/hof.js?v=2.14.0', './worlds/haus.js?v=2.14.0', './worlds/wald.js?v=2.14.0', './worlds/meer.js?v=2.14.0', './worlds/stadt.js?v=2.14.0', './worlds/zauber.js?v=2.14.0',
+  './gestures.js?v=2.14.0', './phone.css?v=2.14.0', './', './index.html', './style.css?v=2.14.0', './v2.css?v=2.14.0', './extra.js?v=2.14.0', './v2.js?v=2.14.0', './soundboard.js?v=2.14.0', './app.js?v=2.14.0', './horse-unicorn-coloring.js?v=2.14.0', './mini-games-plus.js?v=2.14.0', './mini-games-plus.css?v=2.14.0',
   './motifs/dog.svg', './motifs/horse.svg', './motifs/unicorn.svg', './motifs/horse-color.svg', './motifs/unicorn-color.svg', './motifs/cow.svg', './motifs/mickey.svg', './motifs/minnie.svg', './motifs/lucy.svg', './motifs/whale.svg', './motifs/tractor.svg', './motifs/castle.svg', './motifs/chase.svg', './motifs/marshall.svg', './motifs/skye.svg', './motifs/peppa.svg', './motifs/miffy.svg',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'
 ];

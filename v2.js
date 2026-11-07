@@ -40,13 +40,16 @@ function v2Home(){
  byId.set('music',['music','Xylophon','🎶']);
  byId.set('soundboard',['soundboard','Klangwelt','🔊']);
  const ids=[...new Set(['draw','puzzle','scratch','music','color','soundboard',...chosen,...byId.keys()])];
+ const resume=store.get('resume-'+v2Profile());
  const cards=ids.filter(id=>byId.has(id)).map((id,i)=>{
    const [,name,emoji]=byId.get(id);
    const art=['draw','color','music','scratch','puzzle','soundboard'].includes(id)?v2CuratedIllustration(id):`<span class="v2-emoji" aria-hidden="true">${emoji}</span>`;
    return `<button class="v2-gamecard tone-${i%5}" data-game="${id}"><span class="v2-game-art">${art}</span><strong>${esc(name)}</strong></button>`;
  });
- app.innerHTML=`<main class="v2-home"><header class="v2-home-head"><div class="v2-brand">Meine bunte Welt</div><button class="v2-circle" id="parent" aria-label="Elternbereich">${v2Icon('gear',25)}</button></header><section class="v2-welcome"><h1>${greeting}</h1></section><div class="v2-cardgrid">${cards.join('')}</div><footer class="v2-home-footer"><button class="v2-gallery-entry" data-game="gallery">🖼️ Meine Bilder</button></footer></main>`;
+ app.innerHTML=`<main class="v2-home"><header class="v2-home-head"><div class="v2-brand">Meine bunte Welt</div><button class="v2-circle" id="parent" aria-label="Elternbereich">${v2Icon('gear',25)}</button></header><section class="v2-welcome"><h1>${greeting}</h1></section><div class="v2-cardgrid">${cards.slice(0,6).join('')}</div>${resume&&['draw','puzzle','color'].includes(resume.page)?'<button id="world-resume" class="big-btn">↩ '+({draw:'Weitermalen',puzzle:'Weiterpuzzeln',color:'Weiter ausmalen'})[resume.page]+'</button>':''}${worldTiles()}<h2>Weitere Spiele</h2><div class="v2-cardgrid">${cards.slice(6).join('')}</div><footer class="v2-home-footer"><button class="v2-gallery-entry" data-game="gallery">🖼️ Meine Bilder</button></footer></main>`;
  app.querySelectorAll('[data-game]').forEach(button=>button.addEventListener('click',()=>route(button.dataset.game)));
+ app.querySelectorAll('[data-world]').forEach(b=>b.onclick=()=>{currentWorld=WORLDS.find(w=>w.id===b.dataset.world);route('world')});
+ on('world-resume','click',()=>{currentWorld=WORLDS.find(w=>w.id===resume.world)||null;route(resume.page)});
  on('parent','click',openParentGate);
 }
 function v2Category(){
@@ -371,12 +374,19 @@ function v2Draw(){
 }
 
 function v2Parents(){
+ app.insertAdjacentHTML('beforeend',worldCredit());
  const panel=app.querySelector('.panel');if(!panel)return;
  const profiles=store.get('v2-profiles',[{id:'main',name:settings.childName||'Kind 1'}]);if(!Array.isArray(profiles)||!profiles.length)return;
  const active=v2Profile();
  const box=document.createElement('section');box.className='v2-profile-panel';
  box.innerHTML=`<div class="parent-links"><button id="mini-resume" class="tool-btn">🖍️ Zum Malblatt</button><button id="mini-activities" class="tool-btn">Spielauswahl öffnen</button></div><h2>Kinderprofile</h2><p>Jedes Kind erhält eigene Malblätter und eine eigene Bildergalerie. Bestehende Bilder gehören zum ersten Profil.</p><div class="v2-profile-row"><select id="v2-profile-select" aria-label="Aktives Kinderprofil">${profiles.map(p=>`<option value="${esc(p.id)}" ${p.id===active?'selected':''}>${esc(p.name)}</option>`).join('')}</select><input id="v2-profile-name" maxlength="24" placeholder="Neuer Kindername" aria-label="Neuer Kindername"/><button id="v2-add-profile" type="button">Profil hinzufügen</button></div><p class="v2-profile-note">Für jedes Profil kannst du die anderen Familieneinstellungen getrennt anpassen, indem du das Profil auswählst.</p>`;
  panel.insertBefore(box,panel.firstChild);
+ for(const [prefix,label] of [['world-motion-','Bewegungseffekte in Themenwelten'],['world-help-','Puzzle-Hilfe anzeigen']]){
+   const row=document.createElement('label'),toggle=document.createElement('input');
+   row.className='setting';toggle.type='checkbox';toggle.checked=store.get(prefix+active,true);
+   toggle.onchange=()=>store.set(prefix+active,toggle.checked);
+   row.append(label,toggle);box.append(row);
+ }
  on('mini-resume','click',()=>route('draw'));on('mini-activities','click',()=>route('home'));
  box.querySelector('#v2-profile-select').addEventListener('change',e=>{const selected=profiles.find(p=>p.id===e.target.value);if(!selected)return;store.set('v2-active-profile',selected.id);const prefs=store.get('v2-profile-settings-'+selected.id,{});settings=Object.assign(settings,prefs,{childName:selected.name});store.set('settings',settings);route('parents');});
  box.querySelector('#v2-add-profile').addEventListener('click',()=>{const name=box.querySelector('#v2-profile-name').value.trim();if(!name)return toast('Bitte einen Namen eingeben.');if(profiles.length>=6)return toast('Maximal sechs Profile.');const id='kid-'+Date.now();profiles.push({id,name:name.slice(0,24)});store.set('v2-profiles',profiles);store.set('v2-active-profile',id);store.set('v2-profile-settings-'+id,{childName:name.slice(0,24),ageBand:'2'});settings.childName=name.slice(0,24);settings.ageBand='2';store.set('settings',settings);route('parents');});
