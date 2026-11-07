@@ -191,6 +191,8 @@ function v2Draw(options={}){
    <div class="motif-picker-title"><strong>Bild aussuchen</strong><button id="motif-close" aria-label="Bilderauswahl schließen">✕</button></div>
    <div class="motif-picker-grid" id="motif-grid">
    ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="${BW_MALKISTE_MAP[id].src}" alt="" loading="lazy"><small>${name}</small></button>`).join('')}
+   </div>
+   <div class="motif-picker-navigation"><button id="motif-prev" aria-label="Bilder nach oben">▲</button><input type="range" id="motif-scrollbar" min="0" max="100" value="0" aria-label="Bilderliste durch Ziehen verschieben"><button id="motif-next" aria-label="Bilder nach unten">▼</button></div>
   </div>
  </section>`;
  const canvas=document.getElementById('studio-canvas'),stage=document.getElementById('studio-surface');
@@ -365,7 +367,7 @@ function v2Draw(options={}){
     const character=characters.some(([id])=>id===motif);
     // PNG-Konturen ohne verschachtelte SVG-Bilder laden: robuster auf iPad/Safari.
     const sheet=COLORING_SHEETS[motif]||BW_MALKISTE_MAP[motif];
-    const source=sheet?.ink || (character?'motifs/'+motif+'.svg':'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff')));
+    const source=sheet?.ink || sheet?.src || (character?'motifs/'+motif+'.svg':'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff')));
     await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=source;});
     const imageW=sheet?.width||image.naturalWidth||720;
     const imageH=sheet?.height||image.naturalHeight||480;
