@@ -42,7 +42,7 @@
        +muzzle+'<path d="M30 446Q55 434 78 445M404 445Q429 433 465 446" fill="none" stroke="#70B36B" stroke-width="9" stroke-linecap="round"/>'
        +'</svg>';
   }
-  function pictureUrl(a) { if(a.item)return motifUrl(a.item);if(a.kind==='unicorn'||a.kind==='horse')return './motifs/'+a.kind+'-color.svg';return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(artwork(a)); }
+  function pictureUrl(a) { if(a.item)return motifUrl(a.item);if(a.kind==='unicorn'||a.kind==='horse')return './motifs/'+a.kind+'.svg';return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(artwork(a)); }
   function shuffled(n) {
     const order=Array.from({length:n},(_,i)=>i);
     for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}

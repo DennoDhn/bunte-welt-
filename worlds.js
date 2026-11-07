@@ -42,10 +42,10 @@ function worldMenu(){
 }
 function worldMotifs(){
  const w=currentWorld||WORLDS[0];
- frame(w.name,'Wähle dein Ausmalbild.', '<div class="world-grid">'+w.items.map(item=>{
-  const colors=store.get(colorKey(item.id),{});
-  return '<button data-motif="'+item.id+'" style="--paper:'+w.bg+'">'+motifSvg(item,Object.keys(colors).length?colors:null)+'<strong>'+item.name+'</strong></button>';
+ frame(w.name,'Wähle dein Ausmalbild.', '<div class="world-grid">'+sheetCatalog().filter(sheet=>sheet.world===w.id).map(item=>{
+  return '<button data-motif="'+item.id+'" style="--paper:'+w.bg+'">'+'<img src="'+item.src+'" alt="" loading="lazy">'+'<strong>'+item.name+'</strong></button>';
  }).join('')+'</div>');
+ paintedPreviews(app,v2Profile());
  app.querySelectorAll('[data-motif]').forEach(b=>b.onclick=()=>{requestedMotif=b.dataset.motif;route('color')});
 }
 function colorKey(id){return v2Profile()==='main'?'coloring-'+id:'coloring-'+v2Profile()+'-'+id;}

@@ -96,20 +96,70 @@ async function exportCompleteBackup(){
    for(const k of ['fish','flower','house','butterfly','car','balloons','sun','tree','cat','rocket','horse','unicorn'])coloring[k]=store.get('coloring-'+k,{});
    const stickersSaved={};for(const k of Object.keys(STICKER_SETS))stickersSaved[k]=store.get('sticker-'+k,[]);
    const safeSettings={...settings};delete safeSettings.parentPin;delete safeSettings.pin;
-   const payload={type:'meine-bunte-welt-backup',version:1,created:new Date().toISOString(),pictures,coloring,stickers:stickersSaved,settings:safeSettings,profiles:store.get('v2-profiles',[{id:'main',name:safeSettings.childName||'Kind 1'}]),activeProfile:v2Profile()};
+   const puzzle={};
+   for(const key of Object.keys(localStorage)){
+    if(/^bw-puzzle-progress-(main|kid-\d+)(-(hof|haus|wald|meer|stadt|zauber))?$/.test(key))puzzle[key.slice(3)]=store.get(key.slice(3));
+   }
+   const payload={type:'meine-bunte-welt-backup',version:1,created:new Date().toISOString(),pictures,puzzle,coloring,stickers:stickersSaved,settings:safeSettings,profiles:store.get('v2-profiles',[{id:'main',name:safeSettings.childName||'Kind 1'}]),activeProfile:v2Profile()};
    downloadBlob(new Blob([JSON.stringify(payload)],{type:'application/json'}),'meine-bunte-welt-komplett-'+new Date().toISOString().slice(0,10)+'.json');toast('Backup wird gespeichert.');
  }catch{toast('Backup konnte nicht erstellt werden.');}
 }
 function restoreCompleteBackup(file){
- if(file.size>40*1024*1024){toast('Backup ist zu groß.');return;}
+ if(file.size>256*1024*1024){toast('Backup ist zu groß.');return;}
  confirmBox('Backup wiederherstellen?','Bilder und Einstellungen aus dieser Datei werden zusätzlich geladen. Der aktuelle Malentwurf bleibt bestehen.','Backup einlesen',async()=>{
   try{
-   const data=JSON.parse(await file.text());if(data.type!=='meine-bunte-welt-backup'||data.version!==1||!Array.isArray(data.pictures)||data.pictures.length>500)throw Error('Ungültiges Backup');
+   const data=JSON.parse(await file.text());if(data.type!=='meine-bunte-welt-backup'||data.version!==1||!Array.isArray(data.pictures))throw Error('Ungültiges Backup');
    // Validate all records independently; do not insert untrusted labels or huge data.
-   let count=0;
-   for(const p of data.pictures){if(!p||!['gallery','draft'].includes(p.type)||typeof p.data!=='string'||!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(p.data)||p.data.length>8000000)continue;
-     if(p.type==='draft')continue;const id='restored-'+Date.now()+'-'+count+'-'+Math.floor(Math.random()*1000000);await putPic({id,type:'gallery',label:typeof p.label==='string'?p.label.slice(0,60):'Wiederhergestelltes Bild',created:Number.isFinite(p.created)?p.created:Date.now(),data:p.data,outline:typeof p.outline==='string'&&p.outline.length<=8000000&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(p.outline)?p.outline:null,profile:typeof p.profile==='string'&&/^(main|kid-[0-9]+)$/.test(p.profile)?p.profile:'main'});count++;}
-   if(Array.isArray(data.profiles)){const valid=data.profiles.filter(v=>v&&typeof v.id==='string'&&/^(main|kid-[0-9]+)$/.test(v.id)&&typeof v.name==='string'&&v.name.length<=24).slice(0,6);if(valid.length&&valid.some(v=>v.id==='main'))store.set('v2-profiles',valid);}
+   const image=value=>typeof value==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(value);
+   const profileId=value=>typeof value==='string'&&/^(main|kid-\d+)$/.test(value);
+   const catalog=new Set(sheetCatalog().map(item=>item.id));
+   let count=0,drafts=0,progress=0;
+   const records=[];
+   for(const p of data.pictures){
+    if(!p||!['gallery','draft'].includes(p.type)||!image(p.data))continue;
+    const profile=profileId(p.profile)?p.profile:'main';
+    const motif=catalog.has(p.motif)?p.motif:null;
+    const draft=profile==='main'?'draft':'draft-'+profile;
+    let id=p.id;
+    if(p.type==='draft'){
+     if(id!==draft&&id!=='coloring-'+draft&&!(motif&&id===motifDraftId(profile,motif)))continue;
+    }else if(typeof id!=='string'||!/^([a-zA-Z0-9_-]{1,120})$/.test(id)||id.startsWith('sheet-')||id.includes('draft')){
+     id='restored-'+crypto.randomUUID();
+    }
+    records.push({id,type:p.type,profile,motif,data:p.data,outline:image(p.outline)?p.outline:null,
+     preview:image(p.preview)?p.preview:null,hasInk:p.hasInk!==false,created:Number.isFinite(p.created)?p.created:Date.now(),
+     label:typeof p.label==='string'?p.label.slice(0,60):'Mein Bild'});
+   }
+   const database=await db();
+   await new Promise((resolve,reject)=>{
+    const tx=database.transaction('pictures','readwrite'),os=tx.objectStore('pictures');
+    for(const record of records){
+     const request=os.get(record.id);
+     request.onsuccess=()=>{
+      if(request.result)return;
+      os.put(record);if(record.type==='draft')drafts++;else count++;
+     };
+    }
+    tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+   });
+   const profiles=store.get('v2-profiles',[{id:'main',name:'Kind 1'}]);
+   if(Array.isArray(data.profiles)){
+    for(const p of data.profiles){
+     if(!p||!profileId(p.id)||typeof p.name!=='string'||p.name.length>24)continue;
+     const existing=profiles.find(entry=>entry.id===p.id);
+     if(!existing&&profiles.length<6)profiles.push({id:p.id,name:p.name});
+     else if(existing&&!store.get('v2-profiles'))existing.name=p.name;
+    }
+    store.set('v2-profiles',profiles);
+    if(profiles.some(p=>p.id===data.activeProfile))store.set('v2-active-profile',data.activeProfile);
+   }
+   for(const [key,p] of Object.entries(data.puzzle||{})){
+    if(!/^puzzle-progress-(main|kid-\d+)(-(hof|haus|wald|meer|stadt|zauber))?$/.test(key)||store.get(key)||!p)continue;
+    const indices=list=>Array.isArray(list)&&list.length<=p.parts&&new Set(list).size===list.length&&list.every(n=>Number.isInteger(n)&&n>=0&&n<p.parts);
+    if([2,4,6,9].includes(p.parts)&&['2','3','4'].includes(p.age)&&typeof p.animal==='string'&&p.animal.length<100&&indices(p.order)&&p.order.length===p.parts&&indices(p.placed)){
+     if(store.set(key,{age:p.age,animal:p.animal,parts:p.parts,order:p.order,placed:p.placed}))progress++;
+    }
+   }
    for(const k of ['fish','flower','house','butterfly','car','balloons','sun','tree','cat','rocket','horse','unicorn']){const obj=data.coloring?.[k];if(obj&&typeof obj==='object'&&!Array.isArray(obj)&&JSON.stringify(obj).length<3000)store.set('coloring-'+k,obj);}
    for(const k of Object.keys(STICKER_SETS)){const arr=data.stickers?.[k];if(Array.isArray(arr))store.set('sticker-'+k,arr.filter(v=>v&&typeof v.emoji==='string'&&v.emoji.length<10&&Number.isFinite(v.x)&&Number.isFinite(v.y)&&Number.isFinite(v.size)).slice(0,70));}
    const sc=data.settings;if(sc&&typeof sc==='object'){
@@ -121,7 +171,7 @@ function restoreCompleteBackup(file){
        if(k==='favorites'&&Array.isArray(v))settings.favorites=v.filter(id=>ALL_ACTIVITIES.some(a=>a[0]===id)).slice(0,4);
      }store.set('settings',settings);applyTheme();
    }
-   toast(`${count} Bilder wiederhergestellt.`);route('parents');
+   toast(`${count} Bilder, ${drafts} Entwürfe und ${progress} Puzzle-Spielstände wiederhergestellt.`);route('parents');
   }catch(e){toast('Diese Sicherung ist ungültig oder beschädigt.');}
  });
 }

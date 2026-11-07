@@ -13,7 +13,33 @@ const BW_MALKISTE_SHEETS=Object.freeze([
  {id:"malkiste-tractor",name:"Traktor mit Anhänger",src:'motifs/malkiste-traktor.png'},
  {id:"malkiste-firetruck",name:"Feuerwehrauto",src:'motifs/malkiste-feuerwehrauto.png'},
 ]);
-const BW_MALKISTE_MAP=Object.fromEntries(BW_MALKISTE_SHEETS.map(x=>[x.id,x]));
+const studioWorlds=['hof','hof','zauber','zauber','haus','haus','haus','hof','hof','hof','stadt'];
+function sheetCatalog(){
+ const detailed=BW_MALKISTE_SHEETS.map((sheet,i)=>({...sheet,world:studioWorlds[i]}));
+ const simple=['horse','unicorn'].map((animal,i)=>({
+  id:'simple-'+animal,name:i?'Einhorn (einfach)':'Pferd (einfach)',world:i?'zauber':'hof',
+  src:'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(window.bwHorseUnicornColoring(animal,{}))
+ }));
+ const vehiclesAndRabbit=[
+  ['firetruck','Feuerwehrauto','stadt'],['tractor','Traktor','hof'],['rabbit','Hase','haus']
+ ].map(([id,name,world])=>({id:'simple-'+id,name:name+' (einfach)',world,src:'motifs/simple-'+id+'.svg'}));
+ const sheets=WORLDS.flatMap(w=>w.items.map(item=>{
+  const original=COLORING_SHEETS[item.sheet];
+  return {id:item.id,name:item.name,world:w.id,src:original?.ink||
+   'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(motifSvg(item,{}).replace('<svg ','<svg width="600" height="600" '))};
+ }));
+ return [...detailed,...simple,...vehiclesAndRabbit,...sheets];
+}
+function motifDraftId(profile,motif){return 'sheet-'+profile+'-'+motif;}
+async function paintedPreviews(grid,profile){
+ await draftWriteQueue;
+ await Promise.all(Array.from(grid.querySelectorAll('[data-sheet], [data-motif]'),async button=>{
+  const id=button.dataset.sheet||button.dataset.motif;
+  const saved=await getPic(motifDraftId(profile,id));
+  if(saved?.preview&&button.isConnected)button.querySelector('img').src=saved.preview;
+ })).catch(()=>{});
+}
+
 
 
 const V2_ICON = {
@@ -152,7 +178,8 @@ function v2Draw(options={}){
  const profile=v2Profile(),draftId=(coloringMode?'coloring-':'')+v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
  const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830']];
- const characters=BW_MALKISTE_SHEETS.map(x=>[x.id,x.name]);
+ const catalog=sheetCatalog();
+ let currentMotif=null,undo=null;
  const brushes=[
   {id:'pencil',name:'Stift',symbol:'✏️',width:8},
   {id:'crayon',name:'Wachsmaler',symbol:'🖍️',width:22},
@@ -178,6 +205,7 @@ function v2Draw(options={}){
      ${brushes.map(item=>`<button data-brush="${item.id}" aria-label="${item.name}" aria-pressed="${item===brush}"><span aria-hidden="true">${item.symbol}</span><i style="height:${item.width}px"></i></button>`).join('')}
     </div>
    </div>
+   <button id="studio-undo" disabled aria-label="Letzten Strich zurücknehmen">↶</button>
    <button id="studio-new" class="v2-new-sheet" aria-label="Neues Blatt">${v2Icon('new',32)} Neues Blatt</button>
   </nav>
   <span class="sr-only" id="studio-save-state" role="status"></span>
@@ -190,7 +218,7 @@ function v2Draw(options={}){
   <div class="mini-motifs" id="motif-options" role="dialog" aria-label="Ausmalmotive auswählen" hidden>
    <div class="motif-picker-title"><strong>Bild aussuchen</strong><button id="motif-close" aria-label="Bilderauswahl schließen">✕</button></div>
    <div class="motif-picker-grid" id="motif-grid">
-   ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="${BW_MALKISTE_MAP[id].src}" alt="" loading="lazy"><small>${name}</small></button>`).join('')}
+   ${catalog.map(({id,name,src})=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="${src}" alt="" loading="lazy"><small>${name}</small></button>`).join('')}
    </div>
    <div class="motif-picker-navigation"><button id="motif-prev" aria-label="Bilder nach oben">▲</button><input type="range" id="motif-scrollbar" min="0" max="100" value="0" aria-label="Bilderliste durch Ziehen verschieben"><button id="motif-next" aria-label="Bilder nach unten">▼</button></div>
   </div>
@@ -233,7 +261,7 @@ function v2Draw(options={}){
  }
  resize();const watcher=typeof ResizeObserver!=='undefined'?new ResizeObserver(()=>resize()):null;watcher?.observe(stage);
  const indicator=document.getElementById('studio-save-state');
- const setStatus=msg=>{if(indicator)indicator.textContent=msg;};
+ const setStatus=msg=>{indicator.textContent=msg;indicator.className=msg.startsWith('⚠')?'studio-save-error':'sr-only';};
  function serialize(){
 
   const result=canvas.cloneNode();
@@ -243,9 +271,28 @@ function v2Draw(options={}){
   return result.toDataURL();
  }
  function saveDraft(force=false){if(!ready||busy||(!dirty&&!force))return queue;const revision=rev,data=canvas.toDataURL('image/png');setStatus('Speichert …');clearTimeout(saveTimer);saveTimer=null;
-  queue=writeDraftInOrder({id:draftId,type:'draft',data,outline,profile,created:Date.now(),hasInk:ink});
+  const record={id:draftId,type:'draft',data,outline,profile,motif:currentMotif,created:Date.now(),hasInk:ink};
+  if(currentMotif){
+   const preview=document.createElement('canvas'),scale=Math.min(1,240/canvas.width,240/canvas.height);
+   preview.width=Math.max(1,Math.round(canvas.width*scale));preview.height=Math.max(1,Math.round(canvas.height*scale));
+   const context=preview.getContext('2d');context.fillStyle=paper;context.fillRect(0,0,preview.width,preview.height);
+   context.drawImage(canvas,0,0,preview.width,preview.height);if(outline)context.drawImage(overlay,0,0,preview.width,preview.height);
+   record.preview=preview.toDataURL();
+  }
+  queue=draftWriteQueue.then(()=>saveStudioRecords(record));
+  draftWriteQueue=queue.catch(()=>{});
   queue.then(()=>{if(rev===revision){dirty=false;setStatus('✓ Gesichert');}}).catch(()=>setStatus('⚠ Nicht gespeichert'));
   return queue;
+ }
+ async function saveStudioRecords(record,gallery){
+  const database=await db();
+  await new Promise((resolve,reject)=>{
+   const tx=database.transaction('pictures','readwrite'),os=tx.objectStore('pictures');
+   os.put(record);
+   if(record.motif)os.put({...record,id:motifDraftId(profile,record.motif)});
+   if(gallery)os.put(gallery);
+   tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+  });
  }
  function scheduleSave(){dirty=true;rev++;clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveDraft(),650);}
  function restoreImage(data,then){let image=new Image();image.onload=()=>{fillPaper();const scale=Math.min(W/image.width,H/image.height),w=image.width*scale,h=image.height*scale;ctx.drawImage(image,(W-w)/2,(H-h)/2,w,h);then?.();};image.onerror=()=>then?.();image.src=data;}
@@ -255,6 +302,8 @@ function v2Draw(options={}){
   if(!ready||busy||pointer!==null||e.button!==0)return;
   e.preventDefault();
   if(extras.hidden)setPicker(false);
+  undo={canvas:canvas.cloneNode(),ink};undo.canvas.getContext('2d').drawImage(canvas,0,0);
+  document.getElementById('studio-undo').disabled=false;
   previous=xy(e);
    // Farbe wird unter den unbeeinflussbaren Konturen aufgetragen.
    pointer=e.pointerId;
@@ -347,30 +396,41 @@ function v2Draw(options={}){
   paletteButton.setAttribute('aria-expanded',String(!extras.hidden));
   picker.hidden=open!=='motifs';
   document.getElementById('studio-motifs').setAttribute('aria-expanded',String(!picker.hidden));
-  if(!picker.hidden)requestAnimationFrame(syncMotifScroll);
+  if(!picker.hidden){requestAnimationFrame(syncMotifScroll);paintedPreviews(picker,profile);}
  }
- on('studio-sounds','click',()=>{if(ready&&!busy&&pointer===null)route('soundboard');});
- on('studio-home','click',()=>{if(!busy)route('home');});
- on('studio-motifs','click',()=>{if(ready&&!busy)setPicker(picker.hidden?'motifs':false);});
- on('studio-new','click',()=>nextSheet());
- picker.querySelectorAll('[data-sheet]').forEach(button=>button.addEventListener('click',()=>nextSheet(button.dataset.sheet)));
- async function nextSheet(motif){
+ on('studio-undo','click',()=>{
+  if(!undo||busy||pointer!==null)return;
+  fillPaper();const scale=Math.min(W/undo.canvas.width,H/undo.canvas.height);
+  const w=undo.canvas.width*scale,h=undo.canvas.height*scale;
+  ctx.drawImage(undo.canvas,(W-w)/2,(H-h)/2,w,h);ink=undo.ink;undo=null;
+  document.getElementById('studio-undo').disabled=true;scheduleSave();
+ });
+ async function leaveStudio(page){
   if(!ready||busy||pointer!==null)return;
+  const pending=saveDraft();busy=true;
+  try{await pending;route(page);}catch{setStatus('⚠ Bild konnte nicht gespeichert werden.');}finally{busy=false;}
+ }
+ on('studio-sounds','click',()=>leaveStudio('soundboard'));
+ on('studio-home','click',()=>leaveStudio('home'));
+ on('studio-motifs','click',()=>{if(ready&&!busy)setPicker(picker.hidden?'motifs':false);});
+ on('studio-new','click',()=>nextSheet(currentMotif,true));
+ picker.querySelectorAll('[data-sheet]').forEach(button=>button.addEventListener('click',()=>nextSheet(button.dataset.sheet)));
+ async function nextSheet(motif,fresh=false){
+  if(!ready||busy||pointer!==null)return;
+  if(motif&&currentMotif===motif&&!fresh){setPicker(false);return;}
+  const pending=saveDraft();
   busy=true;setPicker(false);setStatus('Sichere dein Bild …');
   clearTimeout(saveTimer);saveTimer=null;
   try{
-   await draftWriteQueue;
+   await pending;
+   const resumed=motif&&!fresh?await getPic(motifDraftId(profile,motif)):null;
    const old=ink?serialize():null;
    let lines=null;
    const tmp=document.createElement('canvas');tmp.width=canvas.width;tmp.height=canvas.height;const t=tmp.getContext('2d');t.fillStyle=paper;t.fillRect(0,0,tmp.width,tmp.height);if(motif){
     const image=new Image();
-    const character=characters.some(([id])=>id===motif);
-    // PNG-Konturen ohne verschachtelte SVG-Bilder laden: robuster auf iPad/Safari.
-    const sheet=COLORING_SHEETS[motif]||BW_MALKISTE_MAP[motif];
-    const source=sheet?.ink || sheet?.src || (character?'motifs/'+motif+'.svg':'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff')));
-    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=source;});
-    const imageW=sheet?.width||image.naturalWidth||720;
-    const imageH=sheet?.height||image.naturalHeight||480;
+    const sheet=catalog.find(s=>s.id===motif);
+    await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=sheet.src;});
+    const imageW=image.naturalWidth,imageH=image.naturalHeight;
     const scale=Math.min(tmp.width*.90/imageW,tmp.height*.90/imageH);
     t.drawImage(image,(tmp.width-imageW*scale)/2,(tmp.height-imageH*scale)/2,imageW*scale,imageH*scale);
     // Lift the printed lines from the untouched template, before the first finger stroke.
@@ -385,12 +445,19 @@ function v2Draw(options={}){
    }
    const newOutline=lines?lines.toDataURL():null;
    const blank=tmp.toDataURL('image/png');
-   const database=await db();const picId='img-'+Date.now()+'-'+Math.floor(Math.random()*100000);const galleryPicture=old?{id:picId,type:'gallery',label:'Mein Bild',data:old,outline,profile,created:Date.now()}:null;
-   await new Promise((resolve,reject)=>{const tx=database.transaction('pictures','readwrite'),os=tx.objectStore('pictures');if(galleryPicture)os.put(galleryPicture);os.put({id:draftId,type:'draft',data:blank,outline:newOutline,profile,created:Date.now(),hasInk:false});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Speicherfehler'));tx.onabort=()=>reject(tx.error||new Error('Speicher abgebrochen'));});
+   const gallery=old?{id:'img-'+crypto.randomUUID(),type:'gallery',label:catalog.find(s=>s.id===currentMotif)?.name||'Mein Bild',data:old,outline,profile,created:Date.now()}:null;
+   if(resumed){
+    const paint=new Image();paint.src=resumed.data;await paint.decode();
+    t.fillStyle=paper;t.fillRect(0,0,tmp.width,tmp.height);fitImage(tmp,paint);
+    if(resumed.outline){const lineImage=new Image();lineImage.src=resumed.outline;await lineImage.decode();lines=tmp.cloneNode();fitImage(lines,lineImage);}
+   }
+   const record=resumed?{...resumed,id:draftId}:{id:draftId,type:'draft',data:blank,outline:newOutline,profile,motif:motif||null,created:Date.now(),hasInk:false};
+   await saveStudioRecords(record,gallery);
+   currentMotif=record.motif;undo=null;document.getElementById('studio-undo').disabled=true;
    overlay.getContext('2d').clearRect(0,0,overlay.width,overlay.height);
    if(lines)overlay.getContext('2d').drawImage(lines,0,0,overlay.width,overlay.height);
    outline=lines?overlay.toDataURL():null;
-   fillPaper();ctx.drawImage(tmp,0,0,W,H);ink=false;dirty=false;rev++;setStatus(old?'✓ Bild gesichert':'✓ Neues Blatt');beep();
+   fillPaper();ctx.drawImage(tmp,0,0,W,H);ink=record.hasInk;dirty=false;rev++;setStatus(resumed?'✓ Weiter malen':old?'✓ Bild gesichert':'✓ Neues Blatt');beep();
   }catch(e){setStatus('⚠ Bitte erneut versuchen');toast('Das Bild konnte nicht gespeichert werden.');}
   finally{busy=false;}
  }
@@ -400,6 +467,7 @@ function v2Draw(options={}){
    await image.decode();fitImage(overlay,image);outline=overlay.toDataURL();
   }
   const loaded=()=>{
+   currentMotif=saved?.motif||null;
    ink=saved?.data?(saved.hasInk===undefined?true:!!saved.hasInk):false;
    ready=true;setStatus('✓ Bereit');
    if(coloringMode&&(options.initialMotif||!saved?.data))nextSheet(options.initialMotif||'malkiste-horse');
@@ -441,8 +509,36 @@ function blocks(){
 }
 function sort(){
  const objs=[['#E87586','Rot'],['#77B68D','Grün'],['#78ABDC','Blau']];let round=0;
- frame('Farben sortieren','Schiebe die Kugel in den passenden Korb.',`<div class="v2-mini-game v2-sort"><div class="v2-sort-object" id="sort-ball" role="img" aria-label="Farbige Kugel"></div><div class="v2-sort-baskets" id="sort-baskets"></div><p id="sort-status" aria-live="polite"></p></div>`);
- function next(){const a=objs[round%objs.length];const ball=document.getElementById('sort-ball');ball.style.background=a[0];ball.setAttribute('aria-label',a[1]+'e Kugel');document.getElementById('sort-status').textContent='Welche Farbe passt?';const choices=[...objs].sort(()=>Math.random()-.5);document.getElementById('sort-baskets').innerHTML=choices.map(c=>`<button class="v2-basket" data-color="${c[0]}" aria-label="${c[1]}"><span style="background:${c[0]}"></span>${c[1]}</button>`).join('');document.querySelectorAll('.v2-basket').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.color===a[0]){document.getElementById('sort-status').textContent='Das passt!';beep();round++;setTimeout(()=>{if(activePage==='sort')next()},500);}else{beep('no');document.getElementById('sort-status').textContent='Probier einen anderen Korb.';}}));}
+ frame('Farben sortieren','Ziehe die Kugel in den passenden Korb oder tippe auf den Korb.',`<div class="v2-mini-game v2-sort"><div class="v2-sort-object" id="sort-ball" role="img"></div><div class="v2-sort-baskets" id="sort-baskets"></div><p id="sort-status" aria-live="polite"></p></div>`);
+ const ball=document.getElementById('sort-ball'),baskets=document.getElementById('sort-baskets'),status=document.getElementById('sort-status');
+ let timer,drag=null,locked=false;
+ cleanup.push(()=>clearTimeout(timer));
+ function next(){
+  locked=false;const [color,name]=objs[round%objs.length];
+  ball.style.background=color;ball.setAttribute('aria-label','Kugel in '+name);status.textContent='Welche Farbe passt?';
+  baskets.innerHTML=[...objs].sort(()=>Math.random()-.5).map(([hex,label])=>`<button class="v2-basket" data-color="${hex}" aria-label="${label}"><span style="background:${hex}"></span>${label}</button>`).join('');
+ }
+ baskets.onclick=e=>{
+  const button=e.target.closest('button');if(!button||locked)return;
+  if(button.dataset.color!==objs[round%objs.length][0]){status.textContent='Probier einen anderen Korb.';beep('no');return;}
+  locked=true;button.classList.add('target');status.textContent='Das passt!';beep();round++;timer=setTimeout(next,500);
+ };
+ const targetAt=e=>document.elementsFromPoint(e.clientX,e.clientY).map(el=>el.closest('.v2-basket')).find(Boolean);
+ ball.onpointerdown=e=>{
+  if(drag||locked||e.button!==0)return;
+  drag={id:e.pointerId,x:e.clientX,y:e.clientY};ball.setPointerCapture(e.pointerId);
+ };
+ ball.onpointermove=e=>{
+  if(e.pointerId!==drag?.id)return;
+  ball.style.transform=`translate(${e.clientX-drag.x}px,${e.clientY-drag.y}px)`;
+  const target=targetAt(e);for(const b of baskets.children)b.classList.toggle('target',b===target);
+ };
+ ball.onpointerup=ball.onpointercancel=ball.onlostpointercapture=e=>{
+  if(e.pointerId!==drag?.id)return;
+  const target=e.type==='pointerup'&&targetAt(e);drag=null;ball.style.transform='';
+  for(const b of baskets.children)b.classList.remove('target');
+  if(target)target.click();
+ };
  next();
 }
 function aquarium(){
@@ -454,7 +550,20 @@ function aquarium(){
 function seek(){
  const rounds=[{target:'Schmetterling',items:['🦋','🐝','🌼','🐞','🌳','☀️']},{target:'Sonne',items:['🌙','☁️','⭐','☀️','🪁','🐦']},{target:'Schnecke',items:['🐌','🐛','🍄','🌻','🐞','🪻']}];let round=0;
  frame('Ich entdecke was','Findest du das gesuchte Bild?',`<div class="v2-mini-game"><p class="v2-seek-target" id="seek-prompt"></p><div class="v2-seek-grid" id="seek-grid"></div><p id="seek-status" aria-live="polite"></p></div>`);
- function next(){const r=rounds[round%rounds.length];document.getElementById('seek-prompt').textContent='Wo ist '+(r.target==='Schmetterling'?'der ':r.target==='Sonne'?'die ':'die ')+r.target+'?';document.getElementById('seek-grid').innerHTML=r.items.map(e=>`<button class="v2-seek-item" data-symbol="${e}" aria-label="Bild auswählen">${e}</button>`).join('');document.querySelectorAll('.v2-seek-item').forEach(b=>b.addEventListener('click',()=>{let correct=r.items[0];if(r.target==='Sonne')correct='☀️';if(b.dataset.symbol===correct){document.getElementById('seek-status').textContent='Prima entdeckt!';beep();round++;setTimeout(()=>{if(activePage==='seek')next()},550);}else{beep('no');document.getElementById('seek-status').textContent='Schau nochmal genau.';}}));}
+ const names={'🦋':'Schmetterling','🐝':'Biene','🌼':'Blume','🐞':'Marienkäfer','🌳':'Baum','☀️':'Sonne','🌙':'Mond','☁️':'Wolke','⭐':'Stern','🪁':'Drachen','🐦':'Vogel','🐌':'Schnecke','🐛':'Raupe','🍄':'Pilz','🌻':'Sonnenblume','🪻':'Hyazinthe'};
+ let timer;cleanup.push(()=>clearTimeout(timer));
+ const prompt=document.getElementById('seek-prompt'),grid=document.getElementById('seek-grid'),status=document.getElementById('seek-status');
+ function next(){
+  const r=rounds[round%rounds.length],symbol=r.items.find(s=>names[s]===r.target);
+  const question='Wo ist '+(r.target==='Schmetterling'?'der ':'die ')+r.target+'?';
+  let solved=false;status.textContent='';prompt.textContent=symbol+' '+question;speak(question);
+  grid.innerHTML=r.items.map(s=>`<button class="v2-seek-item" data-symbol="${s}" aria-label="${names[s]}">${s}</button>`).join('');
+  grid.onclick=e=>{
+   const b=e.target.closest('button');if(!b||solved)return;
+   if(b.dataset.symbol!==symbol){status.textContent='Schau nochmal genau.';beep('no');return;}
+   solved=true;status.textContent='Prima entdeckt!';beep();round++;timer=setTimeout(next,550);
+  };
+ }
  next();
 }
 

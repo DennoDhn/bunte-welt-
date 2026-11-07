@@ -175,7 +175,7 @@ function soundboard(){
   app.querySelectorAll('[data-pad]').forEach((b,i)=>{b.hidden=Math.floor(i/6)!==page;b.classList.remove('pad-playing');});
  });
  on('sound-home','click',()=>route('home'));
- on('sound-back','click',()=>route('draw'));
+ on('sound-back','click',()=>route(soundReturn));
  app.querySelectorAll('[data-pad]').forEach(button=>button.addEventListener('click',()=>{
   app.querySelector('.pad-playing')?.classList.remove('pad-playing');
   void button.offsetWidth;
