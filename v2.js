@@ -1,5 +1,20 @@
 /* Meine bunte Welt 2.0 — kindgerechte Oberflaeche, Kreativstudio und vier Spiele. */
 'use strict';
+const BW_MALKISTE_SHEETS=Object.freeze([
+ {id:"malkiste-horse",name:"Pferd mit Fohlen",src:'motifs/malkiste-pferd-fohlen.png'},
+ {id:"malkiste-pony",name:"Pony mit Zöpfen",src:'motifs/malkiste-pferd-pony.png'},
+ {id:"malkiste-unicorn",name:"Einhorn mit Regenbogen",src:'motifs/malkiste-einhorn-regenbogen.png'},
+ {id:"malkiste-unicorn-baby",name:"Mama und Baby-Einhorn",src:'motifs/malkiste-einhorn-baby.png'},
+ {id:"malkiste-cat",name:"Katze mit Wollknäuel",src:'motifs/malkiste-katze-wollknaeuel.png'},
+ {id:"malkiste-dog",name:"Hund mit Knochen",src:'motifs/malkiste-hund-knochen.png'},
+ {id:"malkiste-rabbit",name:"Hase mit Karotte",src:'motifs/malkiste-hase-karotte.png'},
+ {id:"malkiste-cow",name:"Kuh auf der Wiese",src:'motifs/malkiste-kuh.png'},
+ {id:"malkiste-chicks",name:"Henne mit Küken",src:'motifs/malkiste-huehner.png'},
+ {id:"malkiste-tractor",name:"Traktor mit Anhänger",src:'motifs/malkiste-traktor.png'},
+ {id:"malkiste-firetruck",name:"Feuerwehrauto",src:'motifs/malkiste-feuerwehrauto.png'},
+]);
+const BW_MALKISTE_MAP=Object.fromEntries(BW_MALKISTE_SHEETS.map(x=>[x.id,x]));
+
 
 const V2_ICON = {
   back:'<path d="M15 6 9 12l6 6"/>',brush:'<path d="m14.5 6.5 3 3M6 20c-2 0-3-1-3-3 0-2 2-3 4-3l8-8a3 3 0 0 1 4 4l-8 8c-1 1-2 2-5 2Z"/>',
@@ -131,12 +146,13 @@ function regionPicker(overlay,width,height){
   return path;
  };
 }
-function v2Draw(){
+function v2Draw(options={}){
  document.body.classList.add('studio-active');
- const profile=v2Profile(),draftId=v2DraftId();
+ const coloringMode=!!options.coloringMode;
+ const profile=v2Profile(),draftId=(coloringMode?'coloring-':'')+v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
  const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830']];
- const characters=[['malkiste-horse','Pferd mit Fohlen'],['malkiste-unicorn','Einhorn mit Regenbogen'],['dog','Hund'],['horse','Pferd'],['unicorn','Einhorn'],['pony','Pony'],['cow','Kuh'],['mickey','Micky Maus'],['minnie','Minnie Maus'],['lucy','Lasso Lucy'],['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy'],['whale','Wal'],['tractor','Traktor'],['castle','Sandburg']];
+ const characters=BW_MALKISTE_SHEETS.map(x=>[x.id,x.name]);
  const brushes=[
   {id:'pencil',name:'Stift',symbol:'✏️',width:8},
   {id:'crayon',name:'Wachsmaler',symbol:'🖍️',width:22},
@@ -151,7 +167,7 @@ function v2Draw(){
  function swatch([name,hex]){
   return `<button class="v2-color ${hex===color?'selected':''}" style="--swatch:${hex}" data-c="${hex}" aria-label="${name}" aria-pressed="${hex===color}"></button>`;
  }
- app.innerHTML=`<section class="v2-studio" aria-label="Freies Malen">
+ app.innerHTML=`<section class="v2-studio" aria-label="${coloringMode?'Ausmalbilder':'Freies Malen'}">
   <div class="v2-studio-surface" id="studio-surface"><canvas id="studio-canvas" aria-label="Malfläche. Male mit deinem Finger oder einem Stift."></canvas><canvas id="studio-outline" aria-hidden="true"></canvas></div>
   <nav class="v2-studio-top" aria-label="Blatt wählen">
    <button id="studio-home" aria-label="Zur Spielauswahl">🏠</button>
@@ -174,16 +190,13 @@ function v2Draw(){
   <div class="mini-motifs" id="motif-options" role="dialog" aria-label="Ausmalmotive auswählen" hidden>
    <div class="motif-picker-title"><strong>Bild aussuchen</strong><button id="motif-close" aria-label="Bilderauswahl schließen">✕</button></div>
    <div class="motif-picker-grid" id="motif-grid">
-   ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="${COLORING_SHEETS[id]?.ink||({'malkiste-horse':'motifs/malkiste-pferd-fohlen.png','malkiste-unicorn':'motifs/malkiste-einhorn-regenbogen.png'}[id])||'motifs/'+id+'.svg'}" alt=""><small>${name}</small></button>`).join('')}
-   ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus'],['butterfly','🦋','Schmetterling'],['car','🚗','Auto'],['balloons','🎈','Luftballons'],['sun','☀️','Sonne'],['tree','🌳','Baum'],['cat','🐱','Katze'],['rocket','🚀','Rakete']].map(([id,symbol,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img alt="" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(templateSvg(id,{}))}"><small>${name}</small></button>`).join('')}
-   </div>
-   <div class="motif-picker-navigation"><button id="motif-prev" aria-label="Bilder nach oben">▲</button><input type="range" id="motif-scrollbar" min="0" max="100" value="0" aria-label="Bilderliste durch Ziehen verschieben"><button id="motif-next" aria-label="Bilder nach unten">▼</button></div>
+   ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="${BW_MALKISTE_MAP[id].src}" alt="" loading="lazy"><small>${name}</small></button>`).join('')}
   </div>
  </section>`;
  const canvas=document.getElementById('studio-canvas'),stage=document.getElementById('studio-surface');
  const ctx=canvas.getContext('2d'),dpr=Math.min(2,window.devicePixelRatio||1);
  const overlay=document.getElementById('studio-outline');
- let outline=null,regionSource=null,pickRegion=null,strokeRegion=null;
+ let outline=null;
  function fitImage(target,image){
   const scale=Math.min(target.width/image.width,target.height/image.height);
   const w=image.width*scale,h=image.height*scale;
@@ -200,7 +213,7 @@ function v2Draw(){
  let resizeMaster=null,outlineMaster=null,resizeRevision=-1;
  function fillPaper(){ctx.save();ctx.fillStyle=paper;ctx.fillRect(0,0,W,H);ctx.restore();}
  function resize(){const r=stage.getBoundingClientRect();if(r.width<40||r.height<40||(W===r.width&&H===r.height))return;
-  pointer=null;strokeRegion=null;
+  pointer=null;
   const prev=W&&H?document.createElement('canvas'):null;if(prev){prev.width=canvas.width;prev.height=canvas.height;prev.getContext('2d').drawImage(canvas,0,0);}
   // Keep a single source while rotating a phone: never repeatedly shrink padded snapshots.
   let stable=prev;
@@ -227,7 +240,7 @@ function v2Draw(){
   context.drawImage(canvas,0,0);if(outline)context.drawImage(overlay,0,0);
   return result.toDataURL();
  }
- function saveDraft(force=false){if(!ready||busy||(!dirty&&!force))return queue;const revision=rev,data=serialize();setStatus('Speichert …');clearTimeout(saveTimer);saveTimer=null;
+ function saveDraft(force=false){if(!ready||busy||(!dirty&&!force))return queue;const revision=rev,data=canvas.toDataURL('image/png');setStatus('Speichert …');clearTimeout(saveTimer);saveTimer=null;
   queue=writeDraftInOrder({id:draftId,type:'draft',data,outline,profile,created:Date.now(),hasInk:ink});
   queue.then(()=>{if(rev===revision){dirty=false;setStatus('✓ Gesichert');}}).catch(()=>setStatus('⚠ Nicht gespeichert'));
   return queue;
@@ -241,15 +254,10 @@ function v2Draw(){
   e.preventDefault();
   if(extras.hidden)setPicker(false);
   previous=xy(e);
-  strokeRegion=null;
-  if(outline){
-   if(regionSource!==outline){pickRegion=regionPicker(overlay,W,H);regionSource=outline;}
-   strokeRegion=pickRegion(previous);
-   if(!strokeRegion)return;
-  }
-  pointer=e.pointerId;
+   // Farbe wird unter den unbeeinflussbaren Konturen aufgetragen.
+   pointer=e.pointerId;
   ctx.save();
-  if(strokeRegion)ctx.clip(strokeRegion);
+  
   ctx.globalCompositeOperation=erasing?'destination-out':'source-over';
   ctx.fillStyle=color;
   ctx.beginPath();
@@ -262,7 +270,7 @@ function v2Draw(){
  canvas.addEventListener('pointermove',e=>{
   if(pointer!==e.pointerId||busy)return;
   const p=xy(e);
-  ctx.save();if(strokeRegion)ctx.clip(strokeRegion);
+  ctx.save();
   ctx.globalCompositeOperation=erasing?'destination-out':'source-over';
   ctx.lineCap='round';ctx.lineWidth=erasing?44:brush.width;ctx.strokeStyle=color;
   ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.restore();
@@ -356,7 +364,7 @@ function v2Draw(){
     const image=new Image();
     const character=characters.some(([id])=>id===motif);
     // PNG-Konturen ohne verschachtelte SVG-Bilder laden: robuster auf iPad/Safari.
-    const sheet=COLORING_SHEETS[motif]||({'malkiste-horse':{ink:'motifs/malkiste-pferd-fohlen.png'},'malkiste-unicorn':{ink:'motifs/malkiste-einhorn-regenbogen.png'}}[motif]);
+    const sheet=COLORING_SHEETS[motif]||BW_MALKISTE_MAP[motif];
     const source=sheet?.ink || (character?'motifs/'+motif+'.svg':'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff')));
     await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=source;});
     const imageW=sheet?.width||image.naturalWidth||720;
@@ -371,7 +379,7 @@ function v2Draw(){
     }
     lines.getContext('2d').putImageData(raster,0,0);
     t.fillStyle=paper;t.fillRect(0,0,tmp.width,tmp.height);
-    t.drawImage(lines,0,0);
+    // Konturen bleiben ausschliesslich auf dem oberen Canvas.
    }
    const newOutline=lines?lines.toDataURL():null;
    const blank=tmp.toDataURL('image/png');
@@ -386,13 +394,16 @@ function v2Draw(){
  }
  draftWriteQueue.then(()=>getPic(draftId)).then(async saved=>{
   if(saved?.outline){
-   const image=new Image();
-   image.src=saved.outline;
-   await image.decode();
-   fitImage(overlay,image);
-   outline=overlay.toDataURL();
+   const image=new Image();image.src=saved.outline;
+   await image.decode();fitImage(overlay,image);outline=overlay.toDataURL();
   }
-  if(saved?.data){restoreImage(saved.data,()=>{ink=saved.hasInk===undefined?true:!!saved.hasInk;ready=true;setStatus('✓ Bereit');});}else{ready=true;setStatus('✓ Bereit');}}).catch(()=>{ready=true;setStatus('⚠ Lokaler Speicher prüfen');});
+  const loaded=()=>{
+   ink=saved?.data?(saved.hasInk===undefined?true:!!saved.hasInk):false;
+   ready=true;setStatus('✓ Bereit');
+   if(coloringMode&&(options.initialMotif||!saved?.data))nextSheet(options.initialMotif||'malkiste-horse');
+  };
+  if(saved?.data)restoreImage(saved.data,loaded);else loaded();
+ }).catch(()=>{ready=true;setStatus('⚠ Lokaler Speicher prüfen');});
  const onHide=()=>{if(document.visibilityState==='hidden')saveDraft();};const onPage=()=>saveDraft();document.addEventListener('visibilitychange',onHide);window.addEventListener('pagehide',onPage);
  cleanup.push(()=>{document.body.classList.remove('studio-active');clearTimeout(saveTimer);watcher?.disconnect();document.removeEventListener('visibilitychange',onHide);window.removeEventListener('pagehide',onPage);if(dirty&&!busy)saveDraft();});
 }
