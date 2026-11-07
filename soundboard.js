@@ -118,15 +118,18 @@ function makePadSound(context,id){
 }
 
 function soundboard(){
+ const xylo=xylophonePlayer();
  const clips=new Map();
  let current=null,sequence=0,page=0;
  app.innerHTML=`<main class="sound-room"><header><button id="sound-home" aria-label="Zur Spielauswahl">🏠</button><button id="sound-back">🖍️ Zum Malen</button><h1>Klangwelt</h1><button id="sound-next" aria-label="Weitere Klänge">➜</button></header><div class="sound-pads">${soundPads.map((p,i)=>`<button ${i>=6?'hidden':''} data-pad="${p.id}" aria-label="${p.name}" style="--pad:${p.color}"><span class="pad-icon" aria-hidden="true">${p.icon}</span><span class="pad-echo" aria-hidden="true">${p.echo}</span><span>${p.name}</span></button>`).join('')}</div><section id="bubble-play" hidden><div class="bubble-sky" aria-label="Seifenblasen"></div><div class="bubble-actions"><button id="bubble-more" aria-label="Neue Seifenblase">🫧 ＋</button><button id="bubble-back">🎵 Klänge</button></div></section></main>`;
  function silence(){
   sequence++;
+  xylo.stop();
   if(current){current.stop();current.disconnect();current=null;}
  }
  async function play(id){
   silence();
+  if(id==='xylophone'){xylo.play(8);return;}
   if(!settings.sound||settings.quiet)return;
   const request=sequence;
   try{

@@ -65,13 +65,36 @@ function scratch(){
  on('scratch-new','click',()=>{selected=(selected+1)%SCRATCH_MOTIFS.length;document.querySelectorAll('[data-scratch]').forEach(x=>x.classList.toggle('active',Number(x.dataset.scratch)===selected));paint();});paint();
 }
 
+function xylophonePlayer(){
+ const player = new Audio();
+ player.preload = 'auto';
+ const stop = () => player.pause();
+ cleanup.push(stop);
+ return {
+  stop,
+  play(index){
+   if(!settings.sound || settings.quiet){
+    toast('Ton im Elternbereich ausgeschaltet.');
+    return;
+   }
+   const src = new URL('audio/xylo-' + index + '.wav', document.baseURI).href;
+   if(player.src !== src) player.src = src;
+   else player.currentTime = 0;
+   player.play().catch(error => {
+    if(error.name !== 'AbortError') toast('Ton konnte nicht starten. Tippe noch einmal.');
+   });
+  }
+ };
+}
+
 function music(){
+ const xylo = xylophonePlayer();
  const notes=[['Do',261.63,'#f57f83'],['Re',293.66,'#fab16a'],['Mi',329.63,'#f6d46d'],['Fa',349.23,'#96cf8b'],['Sol',392,'#8dd1da'],['La',440,'#8aadec'],['Si',493.88,'#bca0ef'],['Do',523.25,'#eba0c7']];
  frame('Meine Musik-Ecke','Tippe auf die bunten Töne und erfinde deine eigene Musik.',`<div class="activity-area music-stage"><div class="instrument-panel"><div class="instrument-choices"><button data-instrument="wood">🎹 Xylophon</button><button data-instrument="bell">🔔 Glockenspiel</button><button data-instrument="drum">🥁 Trommel</button><button id="melody">🎼 Nachspielen</button></div><div class="music-keys">${notes.map(([name,hz,color],i)=>`<button class="music-key" data-note="${i}" aria-label="Ton ${name}" style="background:${color};height:${155+(7-i)*8}px"><span>${name}</span></button>`).join('')}</div></div><div class="music-percussion"><button data-percussion="drum" aria-label="Trommel spielen">🥁<span>Trommel</span></button><button data-percussion="bell" aria-label="Glöckchen spielen">🔔<span>Glöckchen</span></button><button data-percussion="shake" aria-label="Rassel spielen">🪇<span>Rassel</span></button></div></div>`);
  async function tone(hz,type='sine',length=.5){if(!settings.sound||settings.quiet){toast('Ton im Elternbereich ausgeschaltet.');return;}try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state!=='running')await audioCtx.resume();if(activePage!=='music')return;const t=audioCtx.currentTime;const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type=type;osc.frequency.value=hz;gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.09,t+.015);gain.gain.exponentialRampToValueAtTime(.0001,t+length);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(t);osc.stop(t+length+.04);}catch{toast('Ton konnte nicht starten. Tippe noch einmal.');}}
  let instrument='wood',pattern=[],step=0;
  const keys=[...document.querySelectorAll('[data-note]')];
- function note(i){tone(instrument==='drum'?65+i*10:notes[i][1]*(instrument==='bell'?2:1),instrument==='drum'?'triangle':'sine',instrument==='bell'?.9:instrument==='drum'?.15:.45)}
+ function note(i){if(instrument==='wood'){xylo.play(i);return;}tone(instrument==='drum'?65+i*10:notes[i][1]*(instrument==='bell'?2:1),instrument==='drum'?'triangle':'sine',instrument==='bell'?.9:instrument==='drum'?.15:.45)}
  function light(i){keys[i].animate?.([{filter:'brightness(1.6)',transform:'scale(.95)'},{filter:'brightness(1)',transform:'scale(1)'}],{duration:450})}
  let melodyTimer=null;cleanup.push(()=>clearTimeout(melodyTimer));
  document.querySelectorAll('[data-instrument]').forEach(b=>b.onclick=()=>{instrument=b.dataset.instrument;document.querySelectorAll('[data-instrument]').forEach(el=>el.setAttribute('aria-pressed',String(el===b)));note(0)});

@@ -1,11 +1,12 @@
-/* Meine bunte Welt – Offline-Shell v2.16.0 */
-const CACHE = 'bunte-welt-v2.16.0';
+/* Meine bunte Welt – Offline-Shell v2.16.1 */
+const CACHE = 'bunte-welt-v2.16.1';
 const ASSETS = [
+  ...Array.from({length:9}, (_, i) => `./audio/xylo-${i}.wav`),
   './motifs/simple-firetruck.svg','./motifs/simple-tractor.svg','./motifs/simple-rabbit.svg',
-  './malkiste-coloring.js?v=2.16.0', './motifs/malkiste-pferd-fohlen.png', './motifs/malkiste-einhorn-regenbogen.png', './motifs/malkiste-pferd-pony.png', './motifs/malkiste-einhorn-baby.png', './motifs/malkiste-katze-wollknaeuel.png', './motifs/malkiste-hund-knochen.png', './motifs/malkiste-hase-karotte.png', './motifs/malkiste-kuh.png', './motifs/malkiste-huehner.png', './motifs/malkiste-traktor.png', './motifs/malkiste-feuerwehrauto.png',
-  './motifs/horse-sheet.js?v=2.16.0', './motifs/unicorn-sheet.js?v=2.16.0', './motifs/pony-sheet.js?v=2.16.0',
-  './worlds.js?v=2.16.0', './worlds/hof.js?v=2.16.0', './worlds/haus.js?v=2.16.0', './worlds/wald.js?v=2.16.0', './worlds/meer.js?v=2.16.0', './worlds/stadt.js?v=2.16.0', './worlds/zauber.js?v=2.16.0',
-  './gestures.js?v=2.16.0', './phone.css?v=2.16.0', './', './index.html', './style.css?v=2.16.0', './v2.css?v=2.16.0', './extra.js?v=2.16.0', './v2.js?v=2.16.0', './soundboard.js?v=2.16.0', './app.js?v=2.16.0', './horse-unicorn-coloring.js?v=2.16.0', './mini-games-plus.js?v=2.16.0', './mini-games-plus.css?v=2.16.0',
+  './malkiste-coloring.js?v=2.16.1', './motifs/malkiste-pferd-fohlen.png', './motifs/malkiste-einhorn-regenbogen.png', './motifs/malkiste-pferd-pony.png', './motifs/malkiste-einhorn-baby.png', './motifs/malkiste-katze-wollknaeuel.png', './motifs/malkiste-hund-knochen.png', './motifs/malkiste-hase-karotte.png', './motifs/malkiste-kuh.png', './motifs/malkiste-huehner.png', './motifs/malkiste-traktor.png', './motifs/malkiste-feuerwehrauto.png',
+  './motifs/horse-sheet.js?v=2.16.1', './motifs/unicorn-sheet.js?v=2.16.1', './motifs/pony-sheet.js?v=2.16.1',
+  './worlds.js?v=2.16.1', './worlds/hof.js?v=2.16.1', './worlds/haus.js?v=2.16.1', './worlds/wald.js?v=2.16.1', './worlds/meer.js?v=2.16.1', './worlds/stadt.js?v=2.16.1', './worlds/zauber.js?v=2.16.1',
+  './gestures.js?v=2.16.1', './phone.css?v=2.16.1', './', './index.html', './style.css?v=2.16.1', './v2.css?v=2.16.1', './extra.js?v=2.16.1', './v2.js?v=2.16.1', './soundboard.js?v=2.16.1', './app.js?v=2.16.1', './horse-unicorn-coloring.js?v=2.16.1', './mini-games-plus.js?v=2.16.1', './mini-games-plus.css?v=2.16.1',
   './motifs/dog.svg', './motifs/horse.svg', './motifs/unicorn.svg', './motifs/cow.svg', './motifs/mickey.svg', './motifs/minnie.svg', './motifs/lucy.svg', './motifs/whale.svg', './motifs/tractor.svg', './motifs/castle.svg', './motifs/chase.svg', './motifs/marshall.svg', './motifs/skye.svg', './motifs/peppa.svg', './motifs/miffy.svg',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'
 ];
