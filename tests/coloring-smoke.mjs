@@ -24,17 +24,17 @@ try {
  const scrolled=await page.locator('#templates').evaluate(el=>el.scrollLeft);
  if(scrolled<100)throw new Error('Bilderleiste ist nicht verschiebbar: '+scrolled);
  await page.locator('[data-template="malkiste-horse"]').click();
- await page.waitForFunction(()=>document.getElementById('color-bitmap')?.width===720,{timeout:15000});
+ await page.waitForFunction(()=>document.getElementById('color-bitmap')?.width>=400 && document.getElementById('color-bitmap')?.height>=400,null,{timeout:15000});
  const pixelBefore=await page.locator('#color-bitmap').evaluate(c=>{
-  const d=c.getContext('2d').getImageData(200,580,1,1).data;return Array.from(d);
+  const x=Math.floor(c.width*260/720),y=Math.floor(c.height*600/1000);const d=c.getContext('2d').getImageData(x,y,1,1).data;return Array.from(d);
  });
  const coords=await page.locator('#color-bitmap').evaluate(c=>{
-  const r=c.getBoundingClientRect();return{x:r.left+(200/c.width)*r.width,y:r.top+(580/c.height)*r.height};
+  const r=c.getBoundingClientRect();return{x:r.left+r.width*(260/720),y:r.top+r.height*(600/1000)};
  });
  await page.touchscreen.tap(coords.x,coords.y);
  await page.waitForTimeout(250);
  const pixelAfter=await page.locator('#color-bitmap').evaluate(c=>{
-  const d=c.getContext('2d').getImageData(200,580,1,1).data;return Array.from(d);
+  const x=Math.floor(c.width*260/720),y=Math.floor(c.height*600/1000);const d=c.getContext('2d').getImageData(x,y,1,1).data;return Array.from(d);
  });
  if(JSON.stringify(pixelBefore)===JSON.stringify(pixelAfter)){
   throw new Error('Malkiste-Farbfuellung nicht sichtbar: '+JSON.stringify(pixelBefore));
