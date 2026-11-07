@@ -136,7 +136,7 @@ function v2Draw(){
  const profile=v2Profile(),draftId=v2DraftId();
  const chips=[['Rot','#DF5264'],['Gelb','#EAB326'],['Grün','#41A46B'],['Blau','#4389D2']];
  const extraColors=[['Orange','#F38332'],['Rosa','#F397BB'],['Lila','#9451B5'],['Türkis','#25B8AE'],['Braun','#945B39'],['Grau','#878B94'],['Schwarz','#272830']];
- const characters=[['dog','Hund'],['horse','Pferd'],['unicorn','Einhorn'],['pony','Pony'],['cow','Kuh'],['mickey','Micky Maus'],['minnie','Minnie Maus'],['lucy','Lasso Lucy'],['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy'],['whale','Wal'],['tractor','Traktor'],['castle','Sandburg']];
+ const characters=[['malkiste-horse','Pferd mit Fohlen'],['malkiste-unicorn','Einhorn mit Regenbogen'],['dog','Hund'],['horse','Pferd'],['unicorn','Einhorn'],['pony','Pony'],['cow','Kuh'],['mickey','Micky Maus'],['minnie','Minnie Maus'],['lucy','Lasso Lucy'],['chase','Chase'],['marshall','Marshall'],['skye','Skye'],['peppa','Peppa Wutz'],['miffy','Miffy'],['whale','Wal'],['tractor','Traktor'],['castle','Sandburg']];
  const brushes=[
   {id:'pencil',name:'Stift',symbol:'✏️',width:8},
   {id:'crayon',name:'Wachsmaler',symbol:'🖍️',width:22},
@@ -171,9 +171,13 @@ function v2Draw(){
    <button id="studio-motifs" aria-label="Ausmalmotiv wählen" aria-expanded="false">🐠</button>
   </div>
   <div class="mini-motifs mini-extra" id="extra-colors" role="group" aria-label="Weitere Malfarben" hidden>${extraColors.map(swatch).join('')}<button id="studio-eraser" aria-label="Radierer" aria-pressed="false">🧽</button></div>
-  <div class="mini-motifs" id="motif-options" role="group" aria-label="Ausmalmotive" hidden>
-   ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="${COLORING_SHEETS[id]?.ink||'motifs/'+id+'.svg'}" alt=""><small>${name}</small></button>`).join('')}
+  <div class="mini-motifs" id="motif-options" role="dialog" aria-label="Ausmalmotive auswählen" hidden>
+   <div class="motif-picker-title"><strong>Bild aussuchen</strong><button id="motif-close" aria-label="Bilderauswahl schließen">✕</button></div>
+   <div class="motif-picker-grid" id="motif-grid">
+   ${characters.map(([id,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img src="${COLORING_SHEETS[id]?.ink||({'malkiste-horse':'motifs/malkiste-pferd-fohlen.png','malkiste-unicorn':'motifs/malkiste-einhorn-regenbogen.png'}[id])||'motifs/'+id+'.svg'}" alt=""><small>${name}</small></button>`).join('')}
    ${[['fish','🐠','Fisch'],['flower','🌼','Blume'],['house','🏠','Haus'],['butterfly','🦋','Schmetterling'],['car','🚗','Auto'],['balloons','🎈','Luftballons'],['sun','☀️','Sonne'],['tree','🌳','Baum'],['cat','🐱','Katze'],['rocket','🚀','Rakete']].map(([id,symbol,name])=>`<button class="character-sheet" data-sheet="${id}" aria-label="${name}"><img alt="" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(templateSvg(id,{}))}"><small>${name}</small></button>`).join('')}
+   </div>
+   <div class="motif-picker-navigation"><button id="motif-prev" aria-label="Bilder nach oben">▲</button><input type="range" id="motif-scrollbar" min="0" max="100" value="0" aria-label="Bilderliste durch Ziehen verschieben"><button id="motif-next" aria-label="Bilder nach unten">▼</button></div>
   </div>
  </section>`;
  const canvas=document.getElementById('studio-canvas'),stage=document.getElementById('studio-surface');
@@ -280,6 +284,21 @@ function v2Draw(){
  };
  app.querySelectorAll('.v2-color').forEach(b=>b.addEventListener('click',()=>changeColor(b)));
  const picker=document.getElementById('motif-options');
+ const motifGrid=document.getElementById('motif-grid');
+ const motifScrollbar=document.getElementById('motif-scrollbar');
+ const syncMotifScroll=()=>{
+  const max=Math.max(0,motifGrid.scrollHeight-motifGrid.clientHeight);
+  motifScrollbar.value=max?Math.round(motifGrid.scrollTop/max*100):0;
+  motifScrollbar.disabled=max<5;
+ };
+ motifGrid.addEventListener('scroll',syncMotifScroll,{passive:true});
+ motifScrollbar.addEventListener('input',()=>{
+  const max=motifGrid.scrollHeight-motifGrid.clientHeight;
+  motifGrid.scrollTop=max*Number(motifScrollbar.value)/100;
+ });
+ on('motif-prev','click',()=>motifGrid.scrollBy({top:-Math.max(120,motifGrid.clientHeight*.75),behavior:'smooth'}));
+ on('motif-next','click',()=>motifGrid.scrollBy({top:Math.max(120,motifGrid.clientHeight*.75),behavior:'smooth'}));
+ on('motif-close','click',()=>setPicker(false));
  const paletteButton=document.getElementById('studio-colors');
  const extras=document.getElementById('extra-colors');
  function updatePalette(){
@@ -318,6 +337,7 @@ function v2Draw(){
   paletteButton.setAttribute('aria-expanded',String(!extras.hidden));
   picker.hidden=open!=='motifs';
   document.getElementById('studio-motifs').setAttribute('aria-expanded',String(!picker.hidden));
+  if(!picker.hidden)requestAnimationFrame(syncMotifScroll);
  }
  on('studio-sounds','click',()=>{if(ready&&!busy&&pointer===null)route('soundboard');});
  on('studio-home','click',()=>{if(!busy)route('home');});
@@ -336,7 +356,7 @@ function v2Draw(){
     const image=new Image();
     const character=characters.some(([id])=>id===motif);
     // PNG-Konturen ohne verschachtelte SVG-Bilder laden: robuster auf iPad/Safari.
-    const sheet=COLORING_SHEETS[motif];
+    const sheet=COLORING_SHEETS[motif]||({'malkiste-horse':{ink:'motifs/malkiste-pferd-fohlen.png'},'malkiste-unicorn':{ink:'motifs/malkiste-einhorn-regenbogen.png'}}[motif]);
     const source=sheet?.ink || (character?'motifs/'+motif+'.svg':'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(templateSvg(motif,{}).replace('viewBox=', 'width="720" height="480" viewBox=').replace('#f4fbff','#ffffff')));
     await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject;image.src=source;});
     const imageW=sheet?.width||image.naturalWidth||720;
