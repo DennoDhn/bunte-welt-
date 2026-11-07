@@ -231,3 +231,10 @@ body.focus-mode:not(.studio-active) .focus-float {
 .malkiste-host{display:grid;place-items:center;max-width:100%;min-height:230px}
 .malkiste-canvas{display:block;max-width:100%;width:auto;height:auto;max-height:56dvh;background:#fff;border-radius:15px;touch-action:manipulation;cursor:crosshair}
 @media(max-width:620px){#motif-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}#templates button{min-width:116px;padding:7px 9px}#templates .chip{font-size:14px}.template-navigator button{width:46px;flex-basis:46px}}
+
+/* Malfarben liegen unter dem dauerhaft sichtbaren Konturbild. */
+#studio-canvas{z-index:0}
+#studio-outline{z-index:1;pointer-events:none}
+#motif-options:not([hidden]){max-height:min(66dvh,485px)}
+#motif-grid{max-height:335px}
+#motif-grid .character-sheet img{height:82px;object-fit:contain}
