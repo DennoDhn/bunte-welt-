@@ -42,7 +42,7 @@ try{
  console.log('Bildergalerie: Ziehregler laesst sich bedienen');
 
  await page.locator('[data-sheet="malkiste-unicorn"]').click({force:true});
- await page.waitForFunction(()=>document.getElementById('studio-save-state')?.textContent?.includes('Neues Blatt'),null,{timeout:20000});
+ await page.waitForFunction(()=>/Neues Blatt|Bild gesichert/.test(document.getElementById('studio-save-state')?.textContent||''),null,{timeout:20000});
  const outlineCount=await page.locator('#studio-outline').evaluate(c=>{
   const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
   let n=0;for(let i=3;i<d.length;i+=256)if(d[i]>0)n++;return n;
