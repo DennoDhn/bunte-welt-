@@ -40,6 +40,19 @@ self.addEventListener('fetch', event => {
   event.respondWith((async () => {
     const current = await caches.open(CACHE);
     const saved = await current.match(req) || await caches.match(req);
+    const range = req.headers.get('Range');
+    if (saved && range && url.pathname.endsWith('.wav')) {
+      const bytes = await saved.arrayBuffer();
+      const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+      if (!match || (!match[1] && !match[2])) return saved;
+      const start = match[1] ? Number(match[1]) : Math.max(0, bytes.byteLength - Number(match[2]));
+      const end = match[1] && match[2] ? Math.min(Number(match[2]), bytes.byteLength - 1) : bytes.byteLength - 1;
+      if (start > end) return new Response(null, {status:416, headers:{'Content-Range':'bytes */' + bytes.byteLength}});
+      return new Response(bytes.slice(start, end + 1), {status:206, headers:{
+        'Content-Type':'audio/wav', 'Accept-Ranges':'bytes', 'Content-Length':String(end-start+1),
+        'Content-Range':`bytes ${start}-${end}/${bytes.byteLength}`
+      }});
+    }
     return saved || fetch(req);
   })());
 });
