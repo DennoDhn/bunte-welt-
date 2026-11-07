@@ -18,11 +18,13 @@ try {
  await fish.click({force:true});
  const fill=await fish.getAttribute('fill');
  if(fill!=='#F16A79')throw new Error('SVG-Fuellung funktioniert nicht: '+fill);
+ console.log('SVG-Tap-to-Fill OK');
 
  await page.locator('#motif-picker summary').click();
  await page.locator('#template-slider').evaluate(slider=>{slider.value='100';slider.dispatchEvent(new Event('input',{bubbles:true}));});
  const scrolled=await page.locator('#templates').evaluate(el=>el.scrollLeft);
  if(scrolled<100)throw new Error('Bilderleiste ist nicht verschiebbar: '+scrolled);
+ console.log('SVG-Bilderleiste verschiebbar');
  await page.locator('[data-template="malkiste-horse"]').click();
  await page.waitForFunction(()=>document.getElementById('color-bitmap')?.width>=400 && document.getElementById('color-bitmap')?.height>=400,null,{timeout:15000});
  const pixelBefore=await page.locator('#color-bitmap').evaluate(c=>{
@@ -39,9 +41,12 @@ try {
  if(JSON.stringify(pixelBefore)===JSON.stringify(pixelAfter)){
   throw new Error('Malkiste-Farbfuellung nicht sichtbar: '+JSON.stringify(pixelBefore));
  }
+ console.log('Malkiste-Pferd-Farbfuellung OK');
 
- await page.locator('#back').click();
+ if(await page.locator('#back').isVisible())await page.locator('#back').click();
+ else await page.locator('#focus-exit').click();
  await page.locator('[data-game="draw"]').first().click();
+ await page.waitForFunction(()=>document.getElementById('studio-save-state')?.textContent?.includes('Bereit'),null,{timeout:15000});
  await page.locator('#studio-motifs').click();
  const grid=page.locator('#motif-grid');
  const dims=await grid.evaluate(el=>[el.scrollHeight,el.clientHeight]);
@@ -49,6 +54,7 @@ try {
  await page.locator('#motif-scrollbar').evaluate(slider=>{slider.value='100';slider.dispatchEvent(new Event('input',{bubbles:true}));});
  const pos=await grid.evaluate(el=>el.scrollTop);
  if(pos<20)throw new Error('Bildergalerie-Slider scrollt nicht: '+pos);
+ console.log('Malstudio-Bilderschieber OK');
  await page.locator('#motif-prev').click();
  await page.locator('[data-sheet="malkiste-unicorn"]').click({force:true});
  await page.waitForFunction(()=>document.getElementById('studio-save-state')?.textContent?.includes('Neues Blatt'),{timeout:15000});
