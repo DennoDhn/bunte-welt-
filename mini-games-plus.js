@@ -212,7 +212,16 @@
     const scenes=(currentWorld?[currentWorld]:WORLDS).flatMap(w=>[w.id==='hof'?2:w.id==='wald'?1:0,w.id==='hof'?0:w.id==='wald'?0:1,3].map((index,i)=>{
       const m=w.items[index];return [m.emoji,m.name,w.bg,'#fff6d8',w.covers[i],m];
     }));
-    const magic=currentWorld?scenes:[...scenes,...oldMagic];
+    const sheets = [
+      ['hof','🐴','Pferd mit Fohlen','pferd-fohlen'],
+      ['zauber','🦄','Einhorn mit Regenbogen','einhorn-regenbogen'],
+      ['haus','🐱','Katze mit Wollknäuel','katze-wollknaeuel'],
+      ['hof','🐴','Pony','pferd-pony'],
+      ['haus','🐶','Hund mit Knochen','hund-knochen'],
+      ['wald','🐰','Hase mit Karotte','hase-karotte']
+    ].filter(([world]) => !currentWorld || currentWorld.id === world)
+     .map(([,icon,name,file]) => [icon,name,'#fff1dc','#e7efff','✨',null,'motifs/malkiste-'+file+'.png']);
+    const magic=[...sheets,...scenes,...(currentWorld?[]:oldMagic)];
     let selected=0,pointer=null,last=null,completed=false,moves=0;
     frame('Zauberbilder','Wische mit dem Finger und entdecke die Überraschung.',
       '<div class="activity-area scratch-wrap bw-magic-game">'
@@ -236,7 +245,18 @@
         b.fillStyle=i%2?'#FFFFFF88':'#FDF6C688';b.beginPath();b.arc(x,y,9+i%4*5,0,Math.PI*2);b.fill();}
       b.textAlign='center';b.textBaseline='middle';
       b.font='310px "Apple Color Emoji","Segoe UI Emoji",sans-serif';b.fillText(emoji,450,268);
-      if(magic[selected][5]){
+      if(magic[selected][6]){
+        const scene=selected, img=new Image();
+        img.onload=()=>{
+          if(!back.isConnected || selected!==scene)return;
+          const scale=Math.min(870/img.naturalWidth,460/img.naturalHeight);
+          const width=img.naturalWidth*scale, height=img.naturalHeight*scale;
+          b.fillStyle=gradient;
+          b.fillRect(0,0,900,478);
+          b.drawImage(img,(900-width)/2,8+(460-height)/2,width,height);
+        };
+        img.src=magic[selected][6];
+      }else if(magic[selected][5]){
         const scene=selected,img=new Image();img.onload=()=>{if(!back.isConnected||selected!==scene)return;b.fillStyle=gradient;b.fillRect(200,48,500,420);b.drawImage(img,245,65,410,410)};img.src=motifUrl(magic[selected][5]);
       }
       b.font='bold 48px ui-rounded,system-ui,sans-serif';b.fillStyle='#50617A';b.fillText(name,450,514);
