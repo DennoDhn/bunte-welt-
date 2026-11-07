@@ -1,4 +1,4 @@
-/* Bunte Welt 2.13.0 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
+/* Bunte Welt 2.13.1 – kindgerechte Puzzle- und Zauberbilder-Erweiterung.
    Ergänzt bestehende Spiele, ohne Galerie oder gespeicherte Malbilder zu ändern. */
 (function () {
   'use strict';
@@ -51,6 +51,21 @@
   }
   function enhancedPuzzle() {
     let chosen=0, parts=defaultParts(), placed=new Set(), selected=null, order=shuffled(parts), drag=null;
+    const progressKey='puzzle-progress-'+v2Profile();
+    const saved=store.get(progressKey);
+    const validIndices=(list,size)=>Array.isArray(list) && list.length<=size &&
+      new Set(list).size===list.length && list.every(i=>Number.isInteger(i) && i>=0 && i<size);
+    if(saved && [4,6,9].includes(saved.parts) && saved.age===String(settings.ageBand) &&
+       animals.some(a=>a.kind===saved.animal) && validIndices(saved.order,saved.parts) &&
+       saved.order.length===saved.parts && validIndices(saved.placed,saved.parts)){
+      chosen=animals.findIndex(a=>a.kind===saved.animal);
+      parts=saved.parts;
+      order=saved.order;
+      placed=new Set(saved.placed);
+    }
+    function saveProgress(){
+      store.set(progressKey,{age:String(settings.ageBand),animal:animals[chosen].kind,parts,order,placed:[...placed]});
+    }
     frame('Mein Tier-Puzzle','Tippe auf ein Teil oder ziehe es direkt an die richtige Stelle.',
       '<div class="activity-area bw-puzzle-game">'
       +'<div class="bw-motif-strip" id="bw-puzzle-motifs" aria-label="Tier aussuchen"></div>'
@@ -102,7 +117,7 @@
       if(piece!==slot||placed.has(slot)){
         say('Fast! Versuch eine andere Stelle.');beep('pop');return;
       }
-      placed.add(slot);selected=null;beep();
+      placed.add(slot);saveProgress();selected=null;beep();
       say(placed.size===parts?'Hurra! '+animals[chosen].name+' ist fertig!':'Super! Das passt!');
       draw();
     }
@@ -154,7 +169,7 @@
         el.addEventListener(type,ev=>{if(owns(ev))endDrag();});
       }
     }
-    function reset(){placed=new Set();selected=null;order=shuffled(parts);say('Wohin passt das Teil?');draw();}
+    function reset(){placed=new Set();selected=null;order=shuffled(parts);saveProgress();say('Wohin passt das Teil?');draw();}
     motifs.innerHTML=animals.map((a,i)=>'<button class="bw-motif-button" type="button" data-animal="'+i+'" aria-label="'+a.name+' auswählen"><span aria-hidden="true">'+a.icon+'</span><small>'+a.name+'</small></button>').join('');
     motifs.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{chosen=Number(b.dataset.animal);reset();}));
     on('bw-puzzle-reset','click',reset);
@@ -165,6 +180,8 @@
       const first=selected!==null&&!placed.has(selected)?selected:order.find(i=>!placed.has(i));
       if(first!==undefined)place(first,first);
     });
+    if(placed.size===parts)say('Hurra! '+animals[chosen].name+' ist fertig!');
+    else if(placed.size)say('Hier kannst du weiterpuzzeln.');
     draw();
   }
 
@@ -255,5 +272,5 @@
   /* render() resolves puzzle dynamically; scratch is cached in EXTRA_PAGES. */
   puzzle=enhancedPuzzle;
   EXTRA_PAGES.scratch=enhancedScratch;
-  window.bwMiniGamesPlus={version:'2.13.0',gridFor:gridFor,animalCount:animals.length,magicCount:magic.length};
+  window.bwMiniGamesPlus={version:'2.13.1',gridFor:gridFor,animalCount:animals.length,magicCount:magic.length};
 })();

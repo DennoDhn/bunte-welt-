@@ -21,6 +21,9 @@ function v2Profile(){return store.get('v2-active-profile','main');}
 function v2DraftId(){const p=v2Profile();return p==='main'?'draft':'draft-'+p;}
 function v2CuratedIllustration(key){
   const paths={
+   puzzle:'<path d="M52 37h44c-10-25 28-28 26 0h37v33c23-8 31 26 5 28l-5-1v39h-38c7-28-31-28-28 0H52V99c28 8 27-30 0-25Z" fill="#73a992" stroke="#477967" stroke-width="5" stroke-linejoin="round"/>',
+   scratch:'<rect x="43" y="32" width="148" height="111" rx="18" fill="#b5a2d9"/><path d="m61 111 30-42 21 25 21-19 39 48H61Z" fill="#f8e5ab"/><circle cx="148" cy="58" r="13" fill="#f9d76d"/><path d="m169 100 30-38" stroke="#684e8b" stroke-width="10" stroke-linecap="round"/><path d="m196 34 4 10 10 4-10 4-4 11-4-11-10-4 10-4Z" fill="#efbd53"/>',
+   soundboard:'<rect x="52" y="28" width="137" height="120" rx="22" fill="#567b91"/>'+['#e7ab79','#d487a5','#93c8b2','#edca77'].map((c,i)=>`<rect x="${66+(i%2)*55}" y="${41+Math.floor(i/2)*49}" width="49" height="44" rx="12" fill="${c}"/>`).join(''),
    music:['#d86a70','#e49757','#e5be65','#8bbb83','#77adc8','#a58cc2'].map((fill,i)=>`<rect x="${30+i*28}" y="${35+i*5}" width="26" height="${102-i*8}" rx="9" fill="${fill}"/><circle cx="${43+i*28}" cy="${49+i*5}" r="3" fill="#fff5db"/>`).join('')+'<path d="m78 155 92-74" stroke="#795d49" stroke-width="8" stroke-linecap="round"/><circle cx="171" cy="80" r="13" fill="#544958"/>',
    draw:'<path d="M22 138q32-49 61-12t60-12" fill="none" stroke="#df637c" stroke-width="13" stroke-linecap="round"/><g transform="rotate(39 147 82)"><rect x="128" y="13" width="38" height="92" rx="6" fill="#df637c"/><path d="M128 104h38l-19 39z" fill="#edbd91"/><path d="m139 127 8 16 8-16z" fill="#704555"/><path d="M138 27v67" stroke="#ffa2ad" stroke-width="8" stroke-linecap="round"/></g>',
    color:'<g stroke="#584d70" stroke-width="5" stroke-linejoin="round"><path d="m34 84 45-32v64z" fill="#fffaf2"/><ellipse cx="129" cy="84" rx="60" ry="43" fill="#f3bf66"/><path d="M119 43q-40 40 0 82-43-3-50-41 6-34 50-41Z" fill="#fffaf2"/><path d="m132 82-22 17 2-32z" fill="#eb879a"/></g><circle cx="164" cy="77" r="6" fill="#443d55"/><g fill="#9ecfdc"><circle cx="200" cy="55" r="9"/><circle cx="214" cy="31" r="5"/></g>',
@@ -39,7 +42,7 @@ function v2Home(){
  const ids=[...new Set(['draw','puzzle','scratch','music','color','soundboard',...chosen,...byId.keys()])];
  const cards=ids.filter(id=>byId.has(id)).map((id,i)=>{
    const [,name,emoji]=byId.get(id);
-   const art=['draw','color','music'].includes(id)?v2CuratedIllustration(id):`<span class="v2-emoji" aria-hidden="true">${emoji}</span>`;
+   const art=['draw','color','music','scratch','puzzle','soundboard'].includes(id)?v2CuratedIllustration(id):`<span class="v2-emoji" aria-hidden="true">${emoji}</span>`;
    return `<button class="v2-gamecard tone-${i%5}" data-game="${id}"><span class="v2-game-art">${art}</span><strong>${esc(name)}</strong></button>`;
  });
  app.innerHTML=`<main class="v2-home"><header class="v2-home-head"><div class="v2-brand">Meine bunte Welt</div><button class="v2-circle" id="parent" aria-label="Elternbereich">${v2Icon('gear',25)}</button></header><section class="v2-welcome"><h1>${greeting}</h1></section><div class="v2-cardgrid">${cards.join('')}</div><footer class="v2-home-footer"><button class="v2-gallery-entry" data-game="gallery">🖼️ Meine Bilder</button></footer></main>`;
