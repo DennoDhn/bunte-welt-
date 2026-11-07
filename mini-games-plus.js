@@ -50,8 +50,12 @@
     return order;
   }
   function enhancedPuzzle() {
-    const catalog=(currentWorld?[currentWorld]:WORLDS).flatMap(w=>w.items.slice(0,4).map(item=>({name:item.name,icon:item.emoji,kind:item.id,item})));
-    const animals=currentWorld?catalog:[...catalog,...legacyAnimals];
+    const worlds=currentWorld?[currentWorld]:WORLDS;
+    const puzzleEntry=item=>({name:item.name,icon:item.emoji,kind:item.id,item});
+    const catalog=worlds.flatMap(w=>w.items.slice(0,4).map(puzzleEntry));
+    const originals=currentWorld?catalog:[...catalog,...legacyAnimals];
+    const additions=worlds.flatMap(w=>w.items.slice(4).filter(item=>item.shapes).map(puzzleEntry));
+    const animals=[...originals,...additions];
     let chosen=0, parts=defaultParts(), placed=new Set(), selected=null, order=shuffled(parts), drag=null;
     const progressKey='puzzle-progress-'+v2Profile()+(currentWorld?'-'+currentWorld.id:'');
     const saved=store.get(progressKey);
@@ -94,7 +98,9 @@
       const preview=document.createElement('div');
       preview.className='bw-puzzle-preview';preview.style.backgroundImage='url("'+image+'")';
       if(parts>2)board.append(preview);
-      const insetImage=i=>pictureUrl(animals[(chosen+i)%animals.length]);
+      // Keep the original matching pairs when a saved two-piece puzzle resumes.
+      const insetPool=chosen<originals.length?originals:animals;
+      const insetImage=i=>pictureUrl(insetPool[(chosen+i)%insetPool.length]);
       for(let i=0;i<parts;i++){
         const slot=document.createElement('button');
         slot.type='button';slot.className='bw-puzzle-slot'+(placed.has(i)?' filled':'');
