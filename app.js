@@ -128,54 +128,8 @@ function templateSvg(which,state){
  return `<svg id="color-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 480" role="img" aria-label="Ausmalbild">${bg}${s}</svg>`;
 }
 function color(){
- const templates=[['malkiste-horse','🐴 Pferd mit Fohlen'],['malkiste-unicorn','🦄 Einhorn mit Regenbogen'],['fish','🐠 Fisch'],['flower','🌼 Blume'],['house','🏠 Haus'],['butterfly','🦋 Schmetterling'],['car','🚗 Auto'],['balloons','🎈 Ballons'],['sun','☀️ Sonne'],['tree','🌳 Baum'],['cat','🐱 Katze'],['rocket','🚀 Rakete'],['horse','🐴 Pferd'],['unicorn','🦄 Einhorn']];
- const collection=WORLDS.flatMap(w=>w.items);templates.unshift(...collection.map(m=>[m.id,m.emoji+' '+m.name]));
- let which=requestedMotif||store.get('selected-template',collection[0].id);requestedMotif=null;store.set('selected-template',which);const undo=[];if(!templates.some(t=>t[0]===which))which='fish';
- const selected={value:COLORS[0][1]};
- const profile=v2Profile();
- const stateKey=()=>profile==='main'?'coloring-'+which:'coloring-'+profile+'-'+which;
- function state(){return store.get(stateKey(),{});}
- frame('Buntes Ausmalen','Tippe erst auf eine Farbe und dann auf das Bild.',`<div class="panel coloring-panel"><details id="motif-picker"><summary><span aria-hidden="true">📖</span> Bild aussuchen</summary><div class="chip-row" id="templates">${templates.map(([id,title])=>`<button class="chip ${which===id?'active':''}" data-template="${id}" aria-label="${title}"><span aria-hidden="true">${title.split(' ')[0]}</span> ${esc(title.slice(title.indexOf(' ')+1))}</button>`).join('')}</div><div class="template-navigator" role="group" aria-label="Bildauswahl verschieben"><button id="template-prev" aria-label="Vorherige Bilder">◀</button><input id="template-slider" type="range" min="0" max="100" value="0" aria-label="Bilderleiste ziehen"><button id="template-next" aria-label="Weitere Bilder">▶</button></div></details><div class="paint-tools">${palette(selected.value)}</div><div class="coloring-surface" id="coloring-surface">${templateSvg(which,state())}</div><div class="toolbar" style="margin-top:17px"><button class="tool-btn" id="undo-color" disabled>↶ Rückgängig</button><button class="tool-btn soft" id="reset-coloring">🧽 Farben entfernen</button><button class="tool-btn primary" id="save-coloring">💛 In meine Bilder</button></div></div>`);
- bindPalette(selected);const surf=document.getElementById('coloring-surface');
- let bitmapPainter=null;
- function refresh(){
-  surf.innerHTML=templateSvg(which,state());bitmapPainter=null;
-  if(window.bwMalkisteColoring?.isSheet(which)){
-   bitmapPainter=window.bwMalkisteColoring.mount(surf,which,()=>selected.value,stateKey(),canUndo=>{
-    const button=document.getElementById('undo-color');if(button)button.disabled=!canUndo;
-   });
-  }
-  app.querySelectorAll('[data-template]').forEach(b=>b.classList.toggle('active',b.dataset.template===which));
- }
- refresh();
- let lastSvgTap=0,lastSvgPart='';
- function paintSvg(e){
-  if(bitmapPainter)return;
-  const el=e.target instanceof Element?e.target.closest('[data-colorpart]'):null;
-  if(!el)return;
-  const now=Date.now(),key=el.dataset.colorpart;
-  // Safari liefert nach pointerup oft noch ein click: nur einmal faerben.
-  if(e.type==='click' && now-lastSvgTap<450 && key===lastSvgPart)return;
-  lastSvgTap=now;lastSvgPart=key;
-  let s=state();undo.push({...s});if(undo.length>50)undo.shift();
-  document.getElementById('undo-color').disabled=false;
-  s[key]=selected.value;store.set(stateKey(),s);
-  el.setAttribute('fill',selected.value);beep('pop');
- }
- surf.addEventListener('pointerup',paintSvg);
- surf.addEventListener('click',paintSvg);
- const templateList=document.getElementById('templates'),templateSlider=document.getElementById('template-slider');
- function syncTemplateSlider(){const max=Math.max(0,templateList.scrollWidth-templateList.clientWidth);templateSlider.value=max?Math.round(templateList.scrollLeft/max*100):0;templateSlider.disabled=max<5;}
- templateList.addEventListener('scroll',syncTemplateSlider,{passive:true});
- templateSlider.addEventListener('input',()=>{const max=templateList.scrollWidth-templateList.clientWidth;templateList.scrollLeft=max*Number(templateSlider.value)/100;});
- on('template-prev','click',()=>templateList.scrollBy({left:-Math.max(180,templateList.clientWidth*.72),behavior:'smooth'}));
- on('template-next','click',()=>templateList.scrollBy({left:Math.max(180,templateList.clientWidth*.72),behavior:'smooth'}));
- document.getElementById('motif-picker').addEventListener('toggle',()=>requestAnimationFrame(syncTemplateSlider));
- requestAnimationFrame(syncTemplateSlider);
- app.querySelectorAll('[data-template]').forEach(b=>b.addEventListener('click',()=>{undo.length=0;document.getElementById('undo-color').disabled=true;which=b.dataset.template;store.set('selected-template',which);document.getElementById('motif-picker').open=false;refresh();}));
- on('undo-color','click',e=>{if(bitmapPainter){bitmapPainter.undo();return;}if(undo.length){store.set(stateKey(),undo.pop());refresh();}e.currentTarget.disabled=!undo.length;});
- on('reset-coloring','click',()=>confirmBox('Farben entfernen?','Dieses Ausmalbild wird wieder weiß. In der Galerie gespeicherte Bilder bleiben erhalten.','Ja, zurücksetzen',()=>{if(bitmapPainter){bitmapPainter.reset();return;}undo.push(state());document.getElementById('undo-color').disabled=false;store.set(stateKey(),{});refresh();}));
- on('save-coloring','click',()=>{if(bitmapPainter){bitmapPainter.save();return;}const svg=document.getElementById('color-svg').cloneNode(true);svg.setAttribute('width','1200');svg.setAttribute('height','800');const data='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(svg));const image=new Image();image.onload=()=>{let c=document.createElement('canvas');c.width=1200;c.height=800;let x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,1200,800);x.drawImage(image,0,0,1200,800);saveToGallery(c.toDataURL('image/png'),'Mein Ausmalbild');};image.onerror=()=>toast('Bild konnte nicht gespeichert werden.');image.src=data;});
+ const chosen=requestedMotif;requestedMotif=null;
+ return v2Draw({coloringMode:true,initialMotif:chosen});
 }
 
 /* Formen – ein Ziel, drei große Auswahlmöglichkeiten, ohne Zeitdruck */
