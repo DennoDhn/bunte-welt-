@@ -413,7 +413,7 @@ function v2Draw(options={}){
  on('studio-sounds','click',()=>leaveStudio('soundboard'));
  on('studio-home','click',()=>leaveStudio('home'));
  on('studio-motifs','click',()=>{if(ready&&!busy)setPicker(picker.hidden?'motifs':false);});
- on('studio-new','click',()=>nextSheet(currentMotif,true));
+ on('studio-new','click',()=>nextSheet(null,true));
  picker.querySelectorAll('[data-sheet]').forEach(button=>button.addEventListener('click',()=>nextSheet(button.dataset.sheet)));
  async function nextSheet(motif,fresh=false){
   if(!ready||busy||pointer!==null)return;
