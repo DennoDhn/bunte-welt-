@@ -50,3 +50,5 @@ body.focus-mode .coloring-panel, body.focus-mode .sticker-panel {padding-top: 6p
 .bw-puzzle-game,.bw-puzzle-layout,.bw-puzzle-board,.bw-puzzle-pieces,.bw-puzzle-piece,.bw-puzzle-slot{touch-action:none;overscroll-behavior:contain}
 .bw-puzzle-piece{cursor:grab}
 .bw-puzzle-piece.being-dragged{cursor:grabbing}
+
+.bw-puzzle-slot.bw-drop-target{outline:5px solid #4b9a73;outline-offset:-6px;background-color:#d7f3dd88}
