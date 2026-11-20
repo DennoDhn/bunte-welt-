@@ -21,4 +21,6 @@ jobs:
           node --check app.js
           node --check sw.js
       - name: Puzzle drag and zoom regression
-        run: node tests/puzzle-regression.cjs
+        run: |
+          node tests/puzzle-regression.cjs
+          node tests/puzzle-interaction.cjs
