@@ -88,6 +88,9 @@
     const next=document.getElementById('bw-puzzle-next');
     function pos(i,cols,rows) {return ((i%cols)/(cols-1)*100)+'% '+(Math.floor(i/cols)/Math.max(1,rows-1)*100)+'%';}
     function say(s) {message.textContent=s;}
+    function snapDistance(x,y,r){return Math.hypot(Math.max(r.left-x,0,x-r.right),Math.max(r.top-y,0,y-r.bottom));}
+    function snapAllowed(x,y,r){return snapDistance(x,y,r)<=Math.min(r.width,r.height)*.35;}
+    function clearTargets(){board.querySelectorAll('.bw-drop-target').forEach(el=>el.classList.remove('bw-drop-target'));}
     function draw() {
       const [cols,rows]=gridFor(parts),image=pictureUrl(animals[chosen]);
       board.style.gridTemplateColumns='repeat('+cols+', minmax(0,1fr))';
@@ -143,6 +146,7 @@
       const {el,id,ghost}=drag;
       drag=null;
       ghost?.remove();
+      clearTargets();
       el.classList.remove('being-dragged');
       try{if(el.hasPointerCapture(id))el.releasePointerCapture(id);}catch{}
     }
@@ -174,6 +178,9 @@
         }
         drag.ghost.style.left=ev.clientX+'px';
         drag.ghost.style.top=ev.clientY+'px';
+         clearTargets();
+         const target=board.querySelector('[data-slot="'+index+'"]');
+         if(target&&!placed.has(index)&&snapAllowed(ev.clientX,ev.clientY,target.getBoundingClientRect()))target.classList.add('bw-drop-target');
       });
       el.addEventListener('pointerup',ev=>{
         if(!owns(ev))return;
@@ -184,9 +191,7 @@
         // The correct target has a generous snap zone for small hands.
         const right=board.querySelector('[data-slot="'+index+'"]');
         const r=right.getBoundingClientRect();
-        const snap=Math.min(r.width,r.height)*.25;
-        const distance=Math.hypot(Math.max(r.left-ev.clientX,0,ev.clientX-r.right),Math.max(r.top-ev.clientY,0,ev.clientY-r.bottom));
-        if(distance<=snap){place(index,index);return;}
+        if(snapAllowed(ev.clientX,ev.clientY,r)){place(index,index);return;}
         const slot=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]');
         if(slot&&board.contains(slot))say('Das passt noch nicht. Versuch es erneut.');
         else say('Ziehe das Teil auf das Bild.');
