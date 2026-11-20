@@ -49,6 +49,17 @@ try{
  });
  if(outlineCount<100)throw new Error('Einhorn-Konturen fehlen: '+outlineCount);
  console.log('Malkiste-Einhorn: Originalkonturen geladen');
+ await page.locator('#studio-new').click();
+ await page.waitForFunction(()=>document.getElementById('studio-save-state')?.textContent?.includes('Neues Blatt'));
+ const blank=await page.locator('#studio-outline').evaluate(c=>{
+  const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+  for(let i=3;i<d.length;i+=4)if(d[i]!==0)return false;
+  return true;
+ });
+ if(!blank)throw new Error('Neues Blatt zeigt weiterhin Motiv-Konturen');
+ const motifAfterBlank=await page.evaluate(()=>getPic('coloring-draft').then(p=>p?.motif));
+ if(motifAfterBlank!==null)throw new Error('Neues Blatt hat weiterhin Motiv: '+motifAfterBlank);
+ console.log('Neues Blatt: Konturen entfernt, Motiv zurückgesetzt');
 
  await page.locator('#studio-home').click();
  await page.locator('[data-game="draw"]').first().click();
