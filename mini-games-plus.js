@@ -191,9 +191,7 @@
         // The correct target has a generous snap zone for small hands.
         const right=board.querySelector('[data-slot="'+index+'"]');
         const r=right.getBoundingClientRect();
-        const snap=Math.min(r.width,r.height)*.25;
-        const distance=Math.hypot(Math.max(r.left-ev.clientX,0,ev.clientX-r.right),Math.max(r.top-ev.clientY,0,ev.clientY-r.bottom));
-        if(distance<=snap){place(index,index);return;}
+        if(snapAllowed(ev.clientX,ev.clientY,r)){place(index,index);return;}
         const slot=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]');
         if(slot&&board.contains(slot))say('Das passt noch nicht. Versuch es erneut.');
         else say('Ziehe das Teil auf das Bild.');
