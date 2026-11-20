@@ -1,7 +1,7 @@
 /* The child activity area behaves like a drawing app; parent settings keep normal zoom. */
 (() => {
  'use strict';
- const childArea = () => typeof activePage !== 'undefined' && !['parents','home','puzzle','music'].includes(activePage);
+ const childArea = () => typeof activePage !== 'undefined' && !['parents','home','music'].includes(activePage);
  let lastTap=0,lastX=0,lastY=0,repeatDrag=false;
  const editable = target => target instanceof Element && !!target.closest('input,textarea,select,[contenteditable="true"]');
  function stopGesture(event) {

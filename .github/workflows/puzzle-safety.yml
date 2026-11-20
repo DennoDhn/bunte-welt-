@@ -1,0 +1,24 @@
+name: Puzzle safety checks
+on:
+  push:
+    branches: [main, fix/puzzle-drag-zoom]
+  pull_request:
+    branches: [main]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax
+        run: |
+          node --check mini-games-plus.js
+          node --check gestures.js
+          node --check v2.js
+          node --check app.js
+          node --check sw.js
+      - name: Puzzle drag and zoom regression
+        run: node tests/puzzle-regression.cjs

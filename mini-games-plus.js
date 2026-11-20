@@ -72,7 +72,7 @@
     function saveProgress(){
       store.set(progressKey,{age:String(settings.ageBand),animal:animals[chosen].kind,parts,order,placed:[...placed]});
     }
-    frame('Mein Tier-Puzzle','Tippe auf ein Teil oder ziehe es direkt an die richtige Stelle.',
+    frame('Mein Tier-Puzzle','Ziehe ein Teil mit dem Finger an die richtige Stelle.',
       '<div class="activity-area bw-puzzle-game">'
       +'<div class="bw-motif-strip" id="bw-puzzle-motifs" aria-label="Puzzlemotiv aussuchen"></div>'
       +'<div class="bw-puzzle-layout">'
@@ -111,7 +111,7 @@
           slot.style.backgroundSize='90% auto';slot.style.backgroundPosition='center';
           if(!placed.has(i))slot.classList.add('bw-inset-target');
         }
-        slot.addEventListener('click',()=>{if(placed.has(i))return;if(selected===null){say('Such dir ein Teil aus oder ziehe es auf das Bild.');return;}place(selected,i);});
+        
         board.append(slot);
       }
       for(const i of order){
@@ -123,7 +123,7 @@
         if(parts===2){
           p.style.backgroundImage='url("'+insetImage(i)+'")';p.style.backgroundSize='90% auto';p.style.backgroundPosition='center';p.style.aspectRatio='1';
         }
-        p.addEventListener('click',ev=>{if(ev.detail===0 && !drag){selected=i;beep('pop');draw();}});
+        
         enableDrag(p,i);tray.append(p);
       }
       motifs.querySelectorAll('[data-animal]').forEach(b=>{b.classList.toggle('active',Number(b.dataset.animal)===chosen);});
@@ -144,21 +144,23 @@
       drag=null;
       ghost?.remove();
       el.classList.remove('being-dragged');
-      if(el.hasPointerCapture(id))el.releasePointerCapture(id);
+      try{if(el.hasPointerCapture(id))el.releasePointerCapture(id);}catch{}
     }
     window.addEventListener('blur',endDrag);
     cleanup.push(()=>{endDrag();window.removeEventListener('blur',endDrag);});
     function enableDrag(el,index){
       el.addEventListener('pointerdown',ev=>{
-        if(drag || !ev.isPrimary || ev.button!==0)return;
+        if(drag || !ev.isPrimary || (ev.pointerType==='mouse'&&ev.button!==0))return;
+        ev.preventDefault();
         drag={id:ev.pointerId,el,x:ev.clientX,y:ev.clientY,ghost:null};
-        el.setPointerCapture(ev.pointerId);
+        try{el.setPointerCapture(ev.pointerId);}catch{endDrag();}
       });
-      function owns(ev){return drag?.el===el && drag.id===ev.pointerId;}
+      const owns=ev=>drag?.el===el && drag.id===ev.pointerId;
       el.addEventListener('pointermove',ev=>{
         if(!owns(ev))return;
+        ev.preventDefault();
         if(!drag.ghost){
-          if(Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)<8)return;
+          if(Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)<6)return;
           const box=el.getBoundingClientRect();
           const ghost=el.cloneNode(false);
           ghost.removeAttribute('data-piece');
@@ -175,18 +177,22 @@
       });
       el.addEventListener('pointerup',ev=>{
         if(!owns(ev))return;
-        const moved=!!drag.ghost || Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)>=8;
+        ev.preventDefault();
+        const moved=!!drag.ghost || Math.hypot(ev.clientX-drag.x,ev.clientY-drag.y)>=6;
         endDrag();
-        if(!moved){selected=index;beep('pop');draw();return;}
-        let slot=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]');
-        const right=board.querySelector('[data-slot="'+index+'"]'),r=right.getBoundingClientRect();
+        if(!moved){say('Ziehe das Teil zum passenden Feld.');return;}
+        // The correct target has a generous snap zone for small hands.
+        const right=board.querySelector('[data-slot="'+index+'"]');
+        const r=right.getBoundingClientRect();
+        const snap=Math.min(r.width,r.height)*.25;
         const distance=Math.hypot(Math.max(r.left-ev.clientX,0,ev.clientX-r.right),Math.max(r.top-ev.clientY,0,ev.clientY-r.bottom));
-        if(distance<=Math.min(r.width,r.height)*.12)slot=right;
-        if(slot && board.contains(slot)){place(index,Number(slot.dataset.slot));return;}
-        say('Versuch es noch einmal.');
+        if(distance<=snap){place(index,index);return;}
+        const slot=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-slot]');
+        if(slot&&board.contains(slot))say('Das passt noch nicht. Versuch es erneut.');
+        else say('Ziehe das Teil auf das Bild.');
       });
       for(const type of ['pointercancel','lostpointercapture']){
-        el.addEventListener(type,ev=>{if(owns(ev))endDrag();});
+        el.addEventListener(type,ev=>{if(owns(ev)){endDrag();say('Versuch es noch einmal.');}});
       }
     }
     function reset(){placed=new Set();selected=null;order=shuffled(parts);saveProgress();say('Wohin passt das Teil?');draw();}
@@ -198,7 +204,7 @@
     on('bw-puzzle-help','click',()=>{
       if(placed.size===parts)return;
       const first=selected!==null&&!placed.has(selected)?selected:order.find(i=>!placed.has(i));
-      if(first!==undefined){selected=first;draw();board.querySelector('[data-slot="'+first+'"]').classList.add('bw-hint');say('Hier passt dein Teil hinein.');}
+      if(first!==undefined){board.querySelector('[data-slot="'+first+'"]').classList.add('bw-hint');say('Ziehe das Teil zum markierten Feld.');}
     });
     if(placed.size===parts)say('Hurra! '+animals[chosen].name+' ist fertig!');
     else if(placed.size)say('Hier kannst du weiterpuzzeln.');
