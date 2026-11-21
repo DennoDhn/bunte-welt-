@@ -1,0 +1,60 @@
+/* Bunte Welt – Lernspiele für große Touchflächen, iPad und Smartphone. */
+.bw-learn{width:min(960px,100%);margin:0 auto;padding:8px 14px 36px;flex:1;display:flex;justify-content:center;box-sizing:border-box;touch-action:pan-y}
+.bw-learn-content{display:flex;align-items:center;flex-direction:column;gap:16px;width:100%;max-width:790px;margin:auto;text-align:center}
+.bw-learn-progress{font-size:clamp(15px,2vw,20px);color:#586872;font-weight:800;min-height:24px}
+.bw-letter-card{width:min(100%,580px);background:linear-gradient(150deg,#fff8e2 0%,#edebfd 65%,#e0f1ee 100%);border-radius:34px;box-shadow:0 12px 30px #34486612;padding:16px 20px 22px;display:flex;flex-direction:column;align-items:center;gap:0;box-sizing:border-box}
+.bw-letter-upper{font-size:clamp(104px,25vh,230px);line-height:1;font-weight:950;color:#6c5aa4;text-shadow:0 5px 0 #ffffffad}
+.bw-letter-word{display:flex;justify-content:center;align-items:center;gap:13px;flex-wrap:wrap;font-size:clamp(27px,4vw,42px);color:#394b59}
+.bw-word-picture{font-size:clamp(47px,10vw,76px)}
+.bw-lowercase{font-size:clamp(29px,4vw,43px);border-radius:19px;background:#ffffffaa;padding:2px 17px;color:#7e6cae}
+.bw-learn-actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;width:100%}
+.bw-learn-actions button,.bw-learn-nav button,.bw-audio-import{border-radius:18px;min-height:60px;padding:12px 18px;font-size:clamp(16px,2.3vw,22px);font-weight:850;line-height:1.25;border:0;cursor:pointer}
+.bw-learn-primary{background:#93c8a5;color:#294f3b}
+.bw-learn-secondary{background:#ede9fa;color:#4c4668}
+.bw-learn-speaker{background:#e5f1fd;color:#284f72}
+.bw-learn-actions button:disabled{opacity:.35;cursor:default}
+.bw-learn-notice{font-size:clamp(15px,2vw,19px);min-height:25px;font-weight:700;color:#536675;margin:0}
+.bw-learn-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid #dfe5e9;width:100%}
+.bw-learn-nav button{background:#fff;min-height:45px;padding:8px 12px;font-size:15px;border:1px solid #dce2e7}
+.bw-find-head{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:18px}
+.bw-find-target{font-size:clamp(32px,6vw,64px);font-weight:900;color:#394b65}
+.bw-choices,.bw-build-tiles{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;width:100%}
+.bw-letter-choice,.bw-build-tile{display:grid;place-items:center;min-width:clamp(80px,16vw,150px);min-height:clamp(85px,17vw,150px);padding:10px;border:3px solid #dae4e8;border-radius:29px;background:#fff9e6;color:#4b5e75;box-shadow:0 8px 16px #34486612;font-size:clamp(48px,9vw,90px);font-weight:950;touch-action:manipulation}
+.bw-letter-choice:nth-child(2n){background:#e5f3ee}.bw-letter-choice:nth-child(3n){background:#f1eafa}
+.bw-letter-choice.bw-right{background:#beebc4;border-color:#56a673}
+.bw-letter-choice.bw-try-again{background:#f4ecea;border-color:#d9b7ad}
+.bw-build-art{font-size:clamp(80px,15vh,145px);line-height:1.2}
+.bw-build-line{min-height:68px;letter-spacing:.14em;font-size:clamp(40px,7vw,74px);font-weight:950;color:#465978}
+.bw-build-tile{min-height:clamp(72px,12vw,100px);min-width:clamp(60px,11vw,105px);font-size:clamp(40px,7vw,66px);background:#f3ebff}
+.bw-build-tile:disabled{opacity:.22;transform:scale(.92)}
+.bw-count-items{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;min-height:150px;width:min(600px,100%);border-radius:30px;background:#eaf4ed;padding:16px}
+.bw-count-items span{font-size:clamp(53px,9vw,100px)}
+.bw-audio-admin{border-top:1px solid #dce3e3;margin:22px 0;padding:18px 4px;max-width:720px}
+.bw-audio-admin h2{font-size:22px}
+.bw-audio-admin p{line-height:1.55;color:#596873}
+.bw-audio-import{display:inline-flex;align-items:center;background:#dfeee7;color:#2a5d4d;font-size:16px;position:relative}
+.bw-audio-import input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.bw-learn button:focus-visible,.bw-audio-import:focus-within{outline:4px solid #5d83b6;outline-offset:3px}
+@media(max-width:560px){
+ .bw-learn{padding:4px 6px 18px}
+ .bw-learn-content{gap:11px}
+ .bw-letter-card{border-radius:24px;padding:8px 8px 14px}
+ .bw-letter-upper{font-size:clamp(90px,23vh,160px)}
+ .bw-learn-actions button{min-height:52px;padding:9px 13px;font-size:16px}
+ .bw-learn-nav{gap:5px}
+ .bw-learn-nav button{font-size:13px;min-height:43px}
+ .bw-letter-choice{min-height:83px;min-width:75px;border-radius:20px}
+ .bw-build-tile{min-height:70px;min-width:55px;border-radius:19px}
+}
+@media(orientation:landscape) and (max-height:540px){
+ .bw-learn-content{gap:5px}
+ .bw-letter-card{flex-direction:row;justify-content:center;gap:22px;padding:5px 18px}
+ .bw-letter-upper{font-size:90px}
+ .bw-word-picture{font-size:38px}
+ .bw-build-art{font-size:55px}
+ .bw-count-items{min-height:65px;padding:5px}
+ .bw-count-items span{font-size:50px}
+ .bw-letter-choice{min-height:65px;min-width:85px}
+ .bw-learn-nav{margin-top:3px;padding-top:4px}
+}
+@media(prefers-reduced-motion:reduce){.bw-learn *{animation:none!important;transition:none!important}}
