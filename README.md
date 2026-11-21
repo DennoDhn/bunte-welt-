@@ -8,6 +8,14 @@ Die iPad-App öffnet direkt ein weißes Malblatt oder den letzten lokalen Entwur
 - Die Klangwelt bietet zwölf Geräusche auf zwei Seiten mit je sechs Bildtasten.
 - Das Zahnrad öffnet den PIN-geschützten Elternbereich mit Galerie, Kinderprofilen, Sicherung und Spielauswahl. Dort steht auch die geladene App-Version.
 
+## Lernspiele (Entwicklungsstand 2.18.0)
+
+Vier zusätzliche Lernspiele: **ABC entdecken** (A–Z mit Bildern), **Buchstaben finden**, **Wörter tippen** und **Zahlen entdecken**. Große Tasten, kein Zeitdruck, lokal gespeicherter Fortschritt pro Profil für ABC und Wörter.
+
+**Sprache:** Die Lernspiele verwenden ausschließlich echte, vorher aufgenommene Sprachdateien. Keine KI-Stimme und kein Browser-TTS. Im PIN-geschützten Elternbereich können Erwachsene entsprechende MP3-/OGG-/WAV-/M4A-Aufnahmen auf dem Gerät hinterlegen. Die 36 erforderlichen professionellen Aufnahmen sind **noch nicht Teil dieses Entwicklungsstands**. Bis dahin funktionieren die visuellen Übungen; die Lautsprecher melden fehlende Aufnahmen, statt eine synthetische Stimme abzuspielen.
+
+Aufnahmetexte, Dateinamen, Lizenzanforderungen und Offline-Test: [docs/LERN-AUDIO.md](docs/LERN-AUDIO.md).
+
 ## Datenschutz und Offlinebetrieb
 
 Die App verwendet keine Accounts, Tracker oder externe Bibliotheken.

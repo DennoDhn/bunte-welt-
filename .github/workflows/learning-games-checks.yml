@@ -1,0 +1,37 @@
+name: Lernspiele – Qualitätsprüfung
+
+on:
+  push:
+    branches:
+      - feat/learning-abc-games
+  pull_request:
+    paths:
+      - 'learning-games.js'
+      - 'learning-games.css'
+      - 'app.js'
+      - 'v2.js'
+      - 'index.html'
+      - 'sw.js'
+      - 'docs/LERN-AUDIO.md'
+      - 'tests/learning-games.test.cjs'
+      - '.github/workflows/learning-games-checks.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntaxprüfung
+        run: |
+          node --check learning-games.js
+          node --check app.js
+          node --check v2.js
+          node --check sw.js
+      - name: Lernspiel-Tests
+        run: node --test tests/learning-games.test.cjs

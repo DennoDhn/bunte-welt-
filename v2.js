@@ -80,7 +80,7 @@ function v2Home(){
  const byId=new Map(ALL_ACTIVITIES.map(a=>[a[0],a]));
  byId.set('music',['music','Xylophon','🎶']);
  byId.set('soundboard',['soundboard','Klangwelt','🔊']);
- const ids=[...new Set(['puzzle','scratch','music',...chosen,'draw','color','soundboard',...byId.keys()])];
+ const ids=[...new Set(['draw','color','puzzle','alphabet','music','scratch',...chosen,'letterfind','wordbuild','counting','soundboard',...byId.keys()])];
  const resume=store.get('resume-'+v2Profile());
  const cards=ids.filter(id=>byId.has(id)).map((id,i)=>{
    const [,name,emoji]=byId.get(id);
