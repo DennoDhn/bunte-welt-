@@ -54,7 +54,7 @@ function bwRememberAudio(key,blob) {
   bwAudioUrls.set(key,URL.createObjectURL(blob));bwAudioMissing.delete(key);
 }
 async function bwWarmVoiceClips(){
-  try{for(const item of await bwAudioEntries())if(item.blob)bwRememberAudio(item.key,item.blob);}catch(e){console.warn('Sprachpaket nicht geladen:',e);}
+  try{for(const item of await bwAudioEntries())if(item.blob&&!bwAudioUrls.has(item.key))bwRememberAudio(item.key,item.blob);}catch(e){console.warn('Sprachpaket nicht geladen:',e);}
 }
 function bwPlayVoice(key,notice){
   if(!settings.sound||settings.quiet){if(notice)notice.textContent='Ton ist im Elternbereich ausgeschaltet.';return;}
@@ -69,7 +69,7 @@ function bwPlayVoice(key,notice){
     if(bwCurrentVoice===audio&&notice)notice.textContent='Hier fehlt noch eine echte Sprachaufnahme.';
   },{once:true});
   audio.play().catch(()=>{
-    if(bwCurrentVoice===audio&&notice)notice.textContent='Zum Anhören bitte erneut auf den Lautsprecher tippen.';
+    if(bwCurrentVoice===audio&&notice)notice.textContent=audio.error?'Hier fehlt noch eine echte Sprachaufnahme.':'Zum Anhören bitte erneut auf den Lautsprecher tippen.';
   });
 }
 function bwStopVoice(){if(bwCurrentVoice){bwCurrentVoice.pause();bwCurrentVoice=null;}}
